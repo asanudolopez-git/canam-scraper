@@ -6,8 +6,9 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "puppeteer": "^21.0.0",
-    "exceljs": "^4.3.0"
+    "exceljs": "^4.3.0",
+    "p-limit": "^6.2.0",
+    "puppeteer": "^21.0.0"
   },
   "devDependencies": {
     "dotenv": "^16.0.3"
