@@ -2,26 +2,65 @@ import puppeteer from 'puppeteer';
 import ExcelJS from 'exceljs';
 import dotenv from 'dotenv';
 import pLimit from 'p-limit';
+import fs from 'fs';
 dotenv.config();
 
 import login from './login.js';
 import { getYears, getMakes, getModels, getPartsFromModel } from './navigate.js';
-import { withRetry, saveChunk } from './utils.js';
+import { withRetry } from './utils.js';
 import config from './config.js';
 
 let totalRowsSaved = 0;
+let buffer = [];
+
+const completedParts = new Set();
+if (fs.existsSync('scrape.log')) {
+  const lines = fs.readFileSync('scrape.log', 'utf-8').split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+
+    // Case 1: Normal inline part number
+    const singleLine = line.match(/^Saved part:\s+([A-Z0-9\-]+)$/i);
+    if (singleLine) {
+      completedParts.add(singleLine[1]);
+      continue;
+    }
+
+    // Case 2: "Saved part: PART NUMBER" followed by the actual part number
+    if (/^Saved part:\s+PART NUMBER$/i.test(line)) {
+      const nextLine = lines[i + 1]?.trim();
+      if (nextLine && /^[A-Z0-9\-]+$/i.test(nextLine)) {
+        completedParts.add(nextLine);
+        i++; // skip next line
+      }
+    }
+  }
+}
+
+
+
+const workbook = new ExcelJS.Workbook();
+const worksheet = workbook.addWorksheet('Pricing');
+worksheet.columns = config.columns;
+
+// Handle graceful shutdown
+process.on('SIGINT', async () => {
+  console.warn('Process interrupted. Flushing buffer and saving file...');
+  if (buffer.length > 0) {
+    buffer.forEach(row => worksheet.addRow(row));
+  }
+  await workbook.xlsx.writeFile(config.outputFile);
+  console.log(`Partial file saved to ${config.outputFile}`);
+  process.exit();
+});
 
 const run = async () => {
   console.log("Launching browser...");
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({ headless: 'new' });
   const page = await browser.newPage();
 
   console.log("Logging in...");
   await login(page);
-
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('Pricing');
-  worksheet.columns = config.columns;
 
   console.log("Fetching years...");
   const years = await getYears(page);
@@ -32,40 +71,74 @@ const run = async () => {
     return;
   }
 
-  const limit = pLimit(3);
-
   for (const year of years) {
     console.log(`Processing year: ${year.year}`);
     await withRetry(() => page.goto(year.href), 3, 1000, `Navigating to year: ${year.href}`);
     const makes = await getMakes(page);
 
-    const makeTasks = makes.map(make =>
-      limit(async () => {
-        const makePage = await browser.newPage();
-        console.log(`Processing make: ${make.make}`);
-        await withRetry(() => makePage.goto(make.href), 3, 1000, `Navigating to make: ${make.href}`);
-        const models = await getModels(makePage);
+    for (const make of makes) {
+      const makePage = await browser.newPage();
+      console.log(`Processing make: ${make.make}`);
+      await withRetry(() => makePage.goto(make.href), 3, 1000, `Navigating to make: ${make.href}`);
+      let models = [];
+      try {
+        models = await Promise.race([
+          getModels(makePage),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout getting models')), 10000)
+          )
+        ]);
+        console.log(`Found ${models.length} models for make: ${make.make}`);
+      } catch (err) {
+        console.error(`Error getting models for ${make.make}:`, err.message);
+      }
 
-        const modelTasks = models.map(model =>
-          limit(async () => {
-            const modelPage = await browser.newPage();
-            console.log(`Processing model: ${model.model}`);
-            await withRetry(() => modelPage.goto(model.href), 3, 1000, `Navigating to model: ${model.href}`);
-            const parts = await getPartsFromModel(modelPage, year, make, model);
-            await modelPage.close();
-            console.log(`Found ${parts.length} parts for ${model.model}`);
-            saveChunk(parts, worksheet);
-            totalRowsSaved += parts.length;
-            console.log(`Total rows saved so far: ${totalRowsSaved}`);
-          })
-        );
+      for (const model of models) {
+        const modelPage = await browser.newPage();
+        console.log(`Processing model: ${model.model}`);
+        await withRetry(() => modelPage.goto(model.href), 3, 1000, `Navigating to model: ${model.href}`);
+        let parts = [];
+        try {
+          console.log(`Scraping parts for model: ${model.model}`);
+          parts = await Promise.race([
+            getPartsFromModel(modelPage, year, make, model).catch(err => {
+              console.error(`getPartsFromModel() threw for ${model.model}:`, err.message);
+              return [];
+            }),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Timeout getting parts')), 15000)
+            )
+          ]);
+          console.log(`Found ${parts.length} parts for ${model.model}`);
+        } catch (err) {
+          console.error(`Error scraping model ${model.model}:`, err.message);
+        }
+        await modelPage.close();
 
-        await Promise.all(modelTasks);
-        await makePage.close();
-      })
-    );
+        const newParts = parts.filter(p => !completedParts.has(p.PartNumber));
+        newParts.forEach(row => {
+          fs.appendFileSync('scrape.log', `Saved part: ${row.PartNumber}
+`);
+          completedParts.add(row.PartNumber);
+        });
+        buffer.push(...newParts);
 
-    await Promise.all(makeTasks);
+        if (buffer.length >= 100) {
+          buffer.forEach(row => worksheet.addRow(row));
+          buffer = [];
+        }
+
+        totalRowsSaved += newParts.length;
+        console.log(`Total rows saved so far: ${totalRowsSaved}`);
+      }
+    }
+  };
+
+  await makePage.close();
+  await makePage.close();
+
+  if (buffer.length > 0) {
+    buffer.forEach(row => worksheet.addRow(row));
   }
 
   console.log(`Saving Excel file to ${config.outputFile}...`);

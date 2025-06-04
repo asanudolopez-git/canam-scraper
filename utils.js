@@ -9,14 +9,3 @@ export const withRetry = async (fn, retries = 3, delay = 1000, label = '') => {
     }
   }
 };
-
-let buffer = [];
-
-export const saveChunk = (chunk, worksheet, chunkSize = 100) => {
-  buffer.push(...chunk);
-  if (buffer.length >= chunkSize) {
-    console.log(`Writing ${buffer.length} rows to worksheet...`);
-    buffer.forEach(row => worksheet.addRow(row));
-    buffer = [];
-  }
-};
