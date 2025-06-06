@@ -1,12 +1,12 @@
 import puppeteer from 'puppeteer';
 import ExcelJS from 'exceljs';
 import dotenv from 'dotenv';
-import pLimit from 'p-limit';
+// import pLimit from 'p-limit';
 import fs from 'fs';
 dotenv.config();
 
 import login from './login.js';
-import { getYears, getMakes, getModels, getPartsFromModel } from './navigate.js';
+import { getYear, getMakes, getModels, getPartsFromModel } from './navigate.js';
 import { withRetry } from './utils.js';
 import config from './config.js';
 
@@ -25,19 +25,8 @@ if (fs.existsSync('scrape.log')) {
       completedParts.add(singleLine[1]);
       continue;
     }
-
-    // Case 2: "Saved part: PART NUMBER" followed by the actual part number
-    if (/^Saved part:\s+PART NUMBER$/i.test(line)) {
-      const nextLine = lines[i + 1]?.trim();
-      if (nextLine && /^[A-Z0-9\-]+$/i.test(nextLine)) {
-        completedParts.add(nextLine);
-        i++; // skip next line
-      }
-    }
   }
 }
-
-
 
 const workbook = new ExcelJS.Workbook();
 const worksheet = workbook.addWorksheet('Pricing');
@@ -62,80 +51,78 @@ const run = async () => {
   console.log("Logging in...");
   await login(page);
 
-  console.log("Fetching years...");
-  const years = await getYears(page);
+  const year = getYear();
 
-  if (!years || years.length === 0) {
-    console.error("No year data found. Exiting...");
-    await browser.close();
-    return;
-  }
+  console.log(`Processing year: ${year.year}`);
+  await withRetry(() => page.goto(year.href), 3, 1000, `Navigating to year: ${year.href}`);
+  const makes = await getMakes(page);
 
-  for (const year of years) {
-    console.log(`Processing year: ${year.year}`);
-    await withRetry(() => page.goto(year.href), 3, 1000, `Navigating to year: ${year.href}`);
-    const makes = await getMakes(page);
-
-    for (const make of makes) {
-      const makePage = await browser.newPage();
-      console.log(`Processing make: ${make.make}`);
-      await withRetry(() => makePage.goto(make.href), 3, 1000, `Navigating to make: ${make.href}`);
-      let models = [];
+  let makeCount = 0;
+  for (const make of makes) {
+    // if (makeCount > 0) {
+    //   console.log(`Skipping make ${make.make} due to makeCount limit ${makeCount}`);
+    //   continue;
+    // }
+    makeCount++;
+    const makePage = await browser.newPage();
+    console.log(`Processing make: ${make.make}`);
+    await withRetry(() => makePage.goto(make.href), 3, 1000, `Navigating to make: ${make.href}`);
+    let models = [];
+    try {
+      models = await Promise.race([
+        getModels(makePage),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout getting models')), 10000)
+        )
+      ]);
+      console.log(`Found ${models.length} models for make: ${make.make}`);
+    } catch (err) {
+      console.error(`Error getting models for ${make.make}:`, err.message);
+    }
+    let modelCount = 0;
+    for (const model of models) {
+      // if (modelCount > 0) {
+      //   console.log(`Skipping model ${model.model} due to modelCount limit ${modelCount}`);
+      //   continue;
+      // }
+      modelCount++;
+      const modelPage = await browser.newPage();
+      console.log(`Processing model: ${model.model}`);
+      await withRetry(() => modelPage.goto(model.href), 3, 1000, `Navigating to model: ${model.href}`);
+      let parts = [];
       try {
-        models = await Promise.race([
-          getModels(makePage),
+        console.log(`Scraping parts for model: ${model.model}`);
+        parts = await Promise.race([
+          getPartsFromModel(modelPage, year, make, model).catch(err => {
+            console.error(`getPartsFromModel() threw for ${model.model}:`, err.message);
+            return [];
+          }),
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Timeout getting models')), 10000)
+            setTimeout(() => reject(new Error('Timeout getting parts')), 15000)
           )
         ]);
-        console.log(`Found ${models.length} models for make: ${make.make}`);
+        console.log(`Found ${parts.length} parts for ${model.model}`);
       } catch (err) {
-        console.error(`Error getting models for ${make.make}:`, err.message);
+        console.error(`Error scraping model ${model.model}:`, err.message);
+      }
+      await modelPage.close();
+
+      const newParts = parts.filter(p => !completedParts.has(p.PartNumber));
+      newParts.forEach(row => {
+        fs.appendFileSync('scrape.log', `Saved part: ${row.PartNumber}\n`);
+        completedParts.add(row.PartNumber);
+      });
+      buffer.push(...newParts);
+
+      if (buffer.length >= 100) {
+        buffer.forEach(row => worksheet.addRow(row));
+        buffer = [];
       }
 
-      for (const model of models) {
-        const modelPage = await browser.newPage();
-        console.log(`Processing model: ${model.model}`);
-        await withRetry(() => modelPage.goto(model.href), 3, 1000, `Navigating to model: ${model.href}`);
-        let parts = [];
-        try {
-          console.log(`Scraping parts for model: ${model.model}`);
-          parts = await Promise.race([
-            getPartsFromModel(modelPage, year, make, model).catch(err => {
-              console.error(`getPartsFromModel() threw for ${model.model}:`, err.message);
-              return [];
-            }),
-            new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Timeout getting parts')), 15000)
-            )
-          ]);
-          console.log(`Found ${parts.length} parts for ${model.model}`);
-        } catch (err) {
-          console.error(`Error scraping model ${model.model}:`, err.message);
-        }
-        await modelPage.close();
-
-        const newParts = parts.filter(p => !completedParts.has(p.PartNumber));
-        newParts.forEach(row => {
-          fs.appendFileSync('scrape.log', `Saved part: ${row.PartNumber}
-`);
-          completedParts.add(row.PartNumber);
-        });
-        buffer.push(...newParts);
-
-        if (buffer.length >= 100) {
-          buffer.forEach(row => worksheet.addRow(row));
-          buffer = [];
-        }
-
-        totalRowsSaved += newParts.length;
-        console.log(`Total rows saved so far: ${totalRowsSaved}`);
-      }
+      totalRowsSaved += newParts.length;
+      console.log(`Total rows saved so far: ${totalRowsSaved}`, { newParts });
     }
-  };
-
-  await makePage.close();
-  await makePage.close();
+  }
 
   if (buffer.length > 0) {
     buffer.forEach(row => worksheet.addRow(row));

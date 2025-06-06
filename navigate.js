@@ -1,7 +1,6 @@
-export const getYears = async () => {
-  const currentYear = String(new Date().getFullYear());
-
-  return [{ year: currentYear, href: `https://www.canamautoglass.ca/nags/${currentYear}/` }];
+export const getYear = () => {
+  const year = String(new Date().getFullYear());
+  return { year, href: `https://www.canamautoglass.ca/nags/${year}/` };
 };
 
 export const getMakes = async (page) => {
@@ -24,13 +23,17 @@ export const getModels = async (page) => {
 
 export const getPartsFromModel = async (page, year, make, model) => {
   const rows = await page.$$('.vehicleTable tbody tr');
+  console.log(`Found ${rows.length} parts for model: ${model.model}`);
   const data = [];
 
   for (const row of rows) {
     try {
-      const partNumber = await row.$eval('.partNumber', el => el.innerText.trim());
+      // Only add rows that have a part number link
+      const partNumber = await row.$eval('.partNumber a', el => el && el.innerText.trim());
+      if (!Boolean(partNumber)) { continue; };
       const description = await row.$eval('.description', el => el.innerText.trim());
-      const price = await row.$eval('.price', el => el.innerText.trim());
+      // Ignore MSRP
+      const price = await row.$eval('.price', el => el.innerText.trim().split(/\s+/)[0]);
 
       data.push({
         Year: year.year,
@@ -40,8 +43,12 @@ export const getPartsFromModel = async (page, year, make, model) => {
         Description: description,
         WebsitePrice1_CanAm: price
       });
-    } catch {}
+    } catch { }
   }
-
+  if (data.length === 0) {
+    console.warn(`No parts found for model: ${model.model}`);
+  } else {
+    console.log(`Successfully scraped ${data.length} parts for model: ${model.model}`);
+  }
   return data;
 };
