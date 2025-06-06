@@ -12,14 +12,15 @@ import config from './config.js';
 
 let totalRowsSaved = 0;
 let buffer = [];
+const year = getYear();
 
 const completedParts = new Set();
+// add make and model limits to scrape.log to skip already scraped parts
 if (fs.existsSync('scrape.log')) {
   const lines = fs.readFileSync('scrape.log', 'utf-8').split('\n');
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
 
-    // Case 1: Normal inline part number
     const singleLine = line.match(/^Saved part:\s+([A-Z0-9\-]+)$/i);
     if (singleLine) {
       completedParts.add(singleLine[1]);
@@ -35,12 +36,36 @@ worksheet.columns = config.columns;
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
   console.warn('Process interrupted. Flushing buffer and saving file...');
-  if (buffer.length > 0) {
-    buffer.forEach(row => worksheet.addRow(row));
-  }
-  await workbook.xlsx.writeFile(config.outputFile);
-  console.log(`Partial file saved to ${config.outputFile}`);
-  process.exit();
+  console.log({ buffer, totalRowsSaved, completedParts });
+  (async () => {
+    if (buffer.length > 0) {
+      for (const row of buffer) {
+        try {
+          if (typeof row !== 'object' || !row.PartNumber) {
+            console.warn('⚠️ Skipping invalid row:', row);
+            continue;
+          }
+
+          // Strip unexpected fields
+          const safeRow = Object.fromEntries(
+            Object.entries(row).filter(([_, v]) => typeof v === 'string' || typeof v === 'number')
+          );
+
+          worksheet.addRow(safeRow);
+        } catch (err) {
+          console.error('Failed to add row:', row, err.message);
+        }
+      }
+    }
+    console.log(`Saving partial file to ${config.outputFile}...`);
+    await Promise.race([
+      workbook.xlsx.writeFile(config.outputFile),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Excel save timeout')), 10000))
+    ]);
+    console.log(`Partial file saved to ${config.outputFile}`);
+    console.log("Exiting gracefully...");
+    process.exit();
+  })();
 });
 
 const run = async () => {
@@ -50,8 +75,6 @@ const run = async () => {
 
   console.log("Logging in...");
   await login(page);
-
-  const year = getYear();
 
   console.log(`Processing year: ${year.year}`);
   await withRetry(() => page.goto(year.href), 3, 1000, `Navigating to year: ${year.href}`);
@@ -120,7 +143,7 @@ const run = async () => {
       }
 
       totalRowsSaved += newParts.length;
-      console.log(`Total rows saved so far: ${totalRowsSaved}`, { newParts });
+      console.log(`Total rows saved so far: ${totalRowsSaved}`);
     }
   }
 

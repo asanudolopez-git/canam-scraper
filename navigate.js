@@ -35,13 +35,37 @@ export const getPartsFromModel = async (page, year, make, model) => {
       // Ignore MSRP
       const price = await row.$eval('.price', el => el.innerText.trim().split(/\s+/)[0]);
 
-      data.push({
+      const availability = await row.$eval('.availability', element => element.innerText.trim());
+      const ships = await row.$eval('.ships', element => element.innerText.trim());
+      console.log(`Processing part: ${partNumber} - ${description}`, {
         Year: year.year,
+        YearHref: year.href,
         Make: make.make,
+        MakeHref: make.href,
         Model: model.model,
+        ModelHref: model.href,
+        Body: '',
+        BodyHref: '',
         PartNumber: partNumber,
         Description: description,
-        WebsitePrice1_CanAm: price
+        WebsitePrice1_CanAm: price,
+        Availability: availability,
+        Ships: ships,
+      });
+      data.push({
+        Year: year.year,
+        YearHref: year.href,
+        Make: make.make,
+        MakeHref: make.href,
+        Model: model.model,
+        ModelHref: model.href,
+        Body: '',
+        BodyHref: '',
+        PartNumber: partNumber,
+        Description: description,
+        WebsitePrice1_CanAm: price,
+        Availability: availability,
+        Ships: ships,
       });
     } catch { }
   }
