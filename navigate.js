@@ -1,8 +1,13 @@
-import { startsWithFWorDW, extractPartsFromTableRows } from "./utils.js";
+import { extractPartsFromTableRows } from "./utils.js";
+const FIRST_YEAR = 2000;
 
-export const getYear = () => {
-  const year = String(new Date().getFullYear());
-  return { year, href: `https://www.canamautoglass.ca/nags/${year}/` };
+export const getYears = () => {
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - FIRST_YEAR + 1 }, (_, i) => FIRST_YEAR + i);
+  return years.map(year => ({
+    year,
+    href: `https://www.canamautoglass.ca/nags/${year}/`
+  }));
 };
 
 export const getMakes = async (page) => {

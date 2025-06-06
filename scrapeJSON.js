@@ -5,25 +5,43 @@ import pLimit from 'p-limit';
 dotenv.config();
 
 import login from './login.js';
-import { getYear, getMakes, getModels, getPartsFromModel } from './navigate.js';
+import { getYears, getMakes, getModels, getPartsFromModel } from './navigate.js';
 import { withRetry } from './utils.js';
 import config from './config.js';
 
+let numberOfYears = 0;
 let numberOfMakes = 0;
 let numberOfModels = 0;
 let numberOfParts = 0;
 let totalRowsSaved = 0;
+const yearLimit = pLimit(3);
+const makeLimit = pLimit(3);
+const modelLimit = pLimit(3);
 let buffer = [];
-const year = getYear();
 const fileName = `${config.outputFile}.json`;
 
+const completedYears = [];
+const completedMakes = [];
 const completedParts = new Set();
 if (fs.existsSync('scrape.log')) {
   const lines = fs.readFileSync('scrape.log', 'utf-8').split('\n');
   for (const line of lines) {
-    const match = line.trim().match(/^Saved part:\s+([A-Z0-9\-]+)$/i);
+    const match = line.trim().match(/^Saved (.*):\s+([A-Z0-9\/\-]+)$/i);
     if (match) {
-      completedParts.add(match[1]);
+      switch (match[1]) {
+        case 'year':
+          completedYears.push(match[2]);
+          break;
+        case 'yearMake':
+          completedMakes.push(match[2]);
+          break;
+        case 'part':
+          completedParts.add(match[2]);
+          break;
+        default:
+          console.warn('Unknown saved type:', match[1]);
+          break;
+      }
     }
   }
 }
@@ -55,6 +73,12 @@ process.on('SIGINT', async () => {
 
 const run = async () => {
   const startTime = Date.now();
+  const years = getYears()
+    .filter(y => !completedYears.includes(String(y.year)));
+  numberOfYears = years.length;
+  if (completedYears.size > 0) {
+    console.log(`Skipping Years: ${completedYears.joins(', ')}`);
+  };
   console.log("Launching browser...");
   const browser = await puppeteer.launch({ headless: 'new' });
   const page = await browser.newPage();
@@ -62,86 +86,103 @@ const run = async () => {
   console.log("Logging in...");
   await login(page);
 
-  console.log(`Processing year: ${year.year}`);
-  await withRetry(() => page.goto(year.href), 3, 1000, `Navigating to year: ${year.href}`);
-  const makes = await getMakes(page);
-  numberOfMakes = makes.length;
-
-  const makeLimit = pLimit(4);
-  const modelLimit = pLimit(4);
-
   await Promise.all(
-    makes.map(make => makeLimit(async () => {
-      const makePage = await browser.newPage();
-      console.log(`Processing make: ${make.make}`);
+    years.map(year => yearLimit(async () => {
+      console.log(`Processing year: ${year.year}`);
+      const yearPage = await browser.newPage();
       try {
-        await withRetry(() => makePage.goto(make.href), 3, 1000, `Navigating to make: ${make.href}`);
-        let models = [];
-        try {
-          models = await Promise.race([
-            getModels(makePage),
-            new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Timeout getting models')), 10000)
-            )
-          ]);
-          numberOfModels += models.length;
-          console.log(`Found ${models.length} models for make: ${make.make}`);
-        } catch (err) {
-          console.error(`Error getting models for ${make.make}:`, err.message);
-        }
-        await makePage.close();
-
+        await withRetry(() => yearPage.goto(year.href), 3, 1000, `Navigating to year: ${year.href}`);
+        let makes = await getMakes(yearPage)
+        makes = makes.filter(m => !completedMakes.includes(String(m.make)));
+        numberOfMakes += makes.length;
+        console.log(`Found ${makes.length} makes for year: ${year.year}.`);
+        if (completedMakes.size > 0) {
+          console.log(`Skipping Makes: ${completedMakes.joins(', ')}`);
+        };
         await Promise.all(
-          models.map(model => modelLimit(async () => {
-            const modelPage = await browser.newPage();
-            console.log(`Processing model: ${model.model}`);
+          makes.map(make => makeLimit(async () => {
+            const makePage = await browser.newPage();
+            console.log(`Processing make: ${make.make}`);
             try {
-              await withRetry(() => modelPage.goto(model.href), 3, 1000, `Navigating to model: ${model.href}`);
-              let parts = [];
+              await withRetry(() => makePage.goto(make.href), 3, 1000, `Navigating to make: ${make.href}`);
+              let models = [];
               try {
-                console.log(`Scraping parts for model: ${model.model}`);
-                parts = await Promise.race([
-                  getPartsFromModel(modelPage, year, make, model).catch(err => {
-                    console.error(`getPartsFromModel() threw for ${model.model}:`, err.message);
-                    return [];
-                  }),
+                models = await Promise.race([
+                  getModels(makePage),
                   new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Timeout getting parts')), 15000)
+                    setTimeout(() => reject(new Error('Timeout getting models')), 10000)
                   )
-                ]);
-                numberOfParts += parts.length;
-                console.log(`Found ${parts.length} parts for ${model.model}`);
+                ])
+                numberOfModels += models.length;
+                console.log(`Found ${models.length} models for make: ${make.make}`);
               } catch (err) {
-                console.error(`Error scraping model ${model.model}:`, err.message);
+                console.error(`Error getting models for ${make.make}:`, err.message);
               }
+              await makePage.close();
 
-              const newParts = parts.filter(p => !completedParts.has(p.PartNumber));
-              newParts.forEach(row => {
-                fs.appendFileSync('scrape.log', `Saved part: ${row.PartNumber}\n`);
-                completedParts.add(row.PartNumber);
-              });
-              buffer.push(...newParts);
+              await Promise.all(
+                models.map(model => modelLimit(async () => {
+                  const modelPage = await browser.newPage();
+                  console.log(`Processing model: ${model.model}`);
+                  try {
+                    await withRetry(() => modelPage.goto(model.href), 3, 1000, `Navigating to model: ${model.href}`);
+                    let parts = [];
+                    try {
+                      console.log(`Scraping parts for model: ${model.model}`);
+                      parts = await Promise.race([
+                        getPartsFromModel(modelPage, year, make, model).catch(err => {
+                          console.error(`getPartsFromModel() threw for ${model.model}:`, err.message);
+                          return [];
+                        }),
+                        new Promise((_, reject) =>
+                          setTimeout(() => reject(new Error('Timeout getting parts')), 15000)
+                        )
+                      ]);
+                      numberOfParts += parts.length;
+                      console.log(`Found ${parts.length} parts for ${model.model}`);
+                    } catch (err) {
+                      console.error(`Error scraping model ${model.model}:`, err.message);
+                    }
 
-              if (buffer.length >= 100) {
-                buffer.forEach(row => {
-                  const jsonLine = JSON.stringify(row) + ',\n';
-                  fs.appendFileSync(fileName, jsonLine);
-                });
-                buffer = [];
-              }
+                    const newParts = parts.filter(part => !completedParts.has(part.PartNumber));
+                    newParts.forEach(row => {
+                      fs.appendFileSync('scrape.log', `Saved part: ${row.PartNumber}\n`);
+                      completedParts.add(row.PartNumber);
+                    });
+                    buffer.push(...newParts);
 
-              totalRowsSaved += newParts.length;
-              console.log(`Total rows saved so far: ${totalRowsSaved}`);
+                    if (buffer.length >= 100) {
+                      buffer.forEach(row => {
+                        const jsonLine = JSON.stringify(row) + ',\n';
+                        fs.appendFileSync(fileName, jsonLine);
+                      });
+                      buffer = [];
+                    }
+
+                    totalRowsSaved += newParts.length;
+                  } catch (err) {
+                    console.error(`Error processing model ${model.model}:`, err.message);
+                  } finally {
+                    await modelPage.close();
+                  }
+                }))
+              );
+              fs.appendFileSync('scrape.log', `Saved yearMake: ${year.year}/${make.make}\n`);
+              console.log(`Completed processing make: ${make.make}`);
             } catch (err) {
-              console.error(`Error processing model ${model.model}:`, err.message);
+              console.error(`Error processing make ${make.make}:`, err.message);
             } finally {
-              await modelPage.close();
+              await makePage.close();
             }
           }))
         );
+
+        fs.appendFileSync('scrape.log', `Saved year: ${year.year}\n`);
+        console.log(`Completed processing year: ${year.year}`);
       } catch (err) {
-        console.error(`Error processing make ${make.make}:`, err.message);
-        await makePage.close();
+        console.error(`Error processing year ${year.year}:`, err.message);
+      } finally {
+        await yearPage.close();
       }
     }))
   );
