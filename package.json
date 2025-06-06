@@ -3,7 +3,10 @@
   "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "start": "node index.js"
+    "start": "node scrapeJSON.js",
+    "start:JSON": "node scrapeJSON.js",
+    "start:csv": "node scrapeCSV.js",
+    "start:excel": "node scrapeExcel.js"
   },
   "dependencies": {
     "exceljs": "^4.3.0",
