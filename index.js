@@ -82,10 +82,10 @@ const run = async () => {
 
   let makeCount = 0;
   for (const make of makes) {
-    // if (makeCount > 0) {
-    //   console.log(`Skipping make ${make.make} due to makeCount limit ${makeCount}`);
-    //   continue;
-    // }
+    if (makeCount > 2) {
+      console.log(`Skipping make ${make.make} due to makeCount limit ${makeCount}`);
+      continue;
+    }
     makeCount++;
     const makePage = await browser.newPage();
     console.log(`Processing make: ${make.make}`);
@@ -104,10 +104,10 @@ const run = async () => {
     }
     let modelCount = 0;
     for (const model of models) {
-      // if (modelCount > 0) {
-      //   console.log(`Skipping model ${model.model} due to modelCount limit ${modelCount}`);
-      //   continue;
-      // }
+      if (modelCount > 2) {
+        console.log(`Skipping model ${model.model} due to modelCount limit ${modelCount}`);
+        continue;
+      }
       modelCount++;
       const modelPage = await browser.newPage();
       console.log(`Processing model: ${model.model}`);
