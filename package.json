@@ -9,6 +9,7 @@
     "start:excel": "node scrapeExcel.js"
   },
   "dependencies": {
+    "csv-stringify": "^6.5.2",
     "exceljs": "^4.3.0",
     "p-limit": "^6.2.0",
     "puppeteer": "^21.0.0"

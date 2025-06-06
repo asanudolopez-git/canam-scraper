@@ -10,13 +10,13 @@ import { getYear, getMakes, getModels, getPartsFromModel } from './navigate.js';
 import { withRetry } from './utils.js';
 import config from './config.js';
 
+let numberOfMakes = 0;
 let numberOfModels = 0;
 let numberOfParts = 0;
-let numberOfMakes = 0;
 let totalRowsSaved = 0;
 let buffer = [];
 const year = getYear();
-
+const fileName = `${config.outputFile}.xlsx`;
 const completedParts = new Set();
 if (fs.existsSync('scrape.log')) {
   const lines = fs.readFileSync('scrape.log', 'utf-8').split('\n');
@@ -54,9 +54,9 @@ process.on('SIGINT', async () => {
   }
 
   try {
-    console.log(`Saving partial file to ${config.outputFile}...`);
-    await workbook.xlsx.writeFile(config.outputFile);
-    console.log(`\u2714 File saved to ${config.outputFile}`);
+    console.log(`Saving partial file to ${fileName}...`);
+    await workbook.xlsx.writeFile(fileName);
+    console.log(`\u2714 File saved to ${fileName}`);
   } catch (err) {
     console.error(`Failed to save Excel file:`, err.message);
   }
@@ -160,8 +160,8 @@ const run = async () => {
   console.log(`\u2714 Scraped ${numberOfModels} models and ${numberOfParts} parts from ${numberOfMakes} makes.`);
   const duration = (Date.now() - startTime) / 1000;
   console.log(`Total runtime: ${duration.toFixed(2)} seconds`);
-  console.log(`Saving Excel file to ${config.outputFile}...`);
-  await workbook.xlsx.writeFile(config.outputFile);
+  console.log(`Saving Excel file to ${fileName}...`);
+  await workbook.xlsx.writeFile(fileName);
   console.log("Scrape complete. Total rows saved:", totalRowsSaved);
   console.log("Closing browser.");
 

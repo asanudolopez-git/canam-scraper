@@ -10,10 +10,13 @@ import { getYear, getMakes, getModels, getPartsFromModel } from './navigate.js';
 import { withRetry } from './utils.js';
 import config from './config.js';
 
+let numberOfMakes = 0;
+let numberOfModels = 0;
+let numberOfParts = 0;
 let totalRowsSaved = 0;
 let buffer = [];
 const year = getYear();
-
+const fileName = `${config.outputFile}.csv`;
 const completedParts = new Set();
 if (fs.existsSync('scrape.log')) {
   const lines = fs.readFileSync('scrape.log', 'utf-8').split('\n');
@@ -26,7 +29,7 @@ if (fs.existsSync('scrape.log')) {
 }
 
 const csvHeaders = config.columns.map(c => c.header);
-fs.writeFileSync(config.outputFile.replace(/\.xlsx$/, '.csv'), csvHeaders.join(',') + '\n');
+fs.writeFileSync(fileName, csvHeaders.join(',') + '\n');
 
 process.on('SIGINT', async () => {
   console.warn('\n[CTRL+C] Interrupt received. Flushing buffer and saving...');
@@ -40,7 +43,7 @@ process.on('SIGINT', async () => {
           continue;
         }
         const values = config.columns.map(c => row[c.key] ?? '');
-        fs.appendFileSync(config.outputFile.replace(/\.xlsx$/, '.csv'), stringify([values]));
+        fs.appendFileSync(fileName), stringify([values]);
       } catch (err) {
         console.error('Failed to add row:', row, err.message);
       }
@@ -63,7 +66,7 @@ const run = async () => {
   console.log(`Processing year: ${year.year}`);
   await withRetry(() => page.goto(year.href), 3, 1000, `Navigating to year: ${year.href}`);
   const makes = await getMakes(page);
-
+  numberOfMakes = makes.length;
   const makeLimit = pLimit(4);
   const modelLimit = pLimit(4);
 
@@ -81,6 +84,7 @@ const run = async () => {
               setTimeout(() => reject(new Error('Timeout getting models')), 10000)
             )
           ]);
+          numberOfModels += models.length;
           console.log(`Found ${models.length} models for make: ${make.make}`);
         } catch (err) {
           console.error(`Error getting models for ${make.make}:`, err.message);
@@ -115,12 +119,13 @@ const run = async () => {
                 fs.appendFileSync('scrape.log', `Saved part: ${row.PartNumber}\n`);
                 completedParts.add(row.PartNumber);
               });
+              numberOfParts
               buffer.push(...newParts);
 
               if (buffer.length >= 100) {
                 buffer.forEach(row => {
                   const values = config.columns.map(c => row[c.key] ?? '');
-                  fs.appendFileSync(config.outputFile.replace(/\.xlsx$/, '.csv'), stringify([values]));
+                  fs.appendFileSync(fileName, stringify([values]));
                 });
                 buffer = [];
               }
@@ -133,23 +138,24 @@ const run = async () => {
               await modelPage.close();
             }
           })
-          );
+          ));
       } catch (err) {
         console.error(`Error processing make ${make.make}:`, err.message);
         await makePage.close();
       }
-    })
-    );
+    }))
+  );
 
   if (buffer.length > 0) {
     buffer.forEach(row => {
       const values = config.columns.map(c => row[c.key] ?? '');
-      fs.appendFileSync(config.outputFile.replace(/\.xlsx$/, '.csv'), stringify([values]));
+      fs.appendFileSync(fileName), stringify([values]);
     });
   }
-
+  console.log(`\u2714 Scraped ${numberOfModels} models and ${numberOfParts} parts from ${numberOfMakes} makes.`);
   console.log("Scrape complete. Total rows saved:", totalRowsSaved);
   console.log("Closing browser.");
+  console.log(`Saving CSV file to ${fileName}...`);
   await browser.close();
   const duration = (Date.now() - startTime) / 1000;
   console.log(`Total runtime: ${duration.toFixed(2)} seconds`);

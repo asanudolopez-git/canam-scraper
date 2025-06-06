@@ -18,8 +18,8 @@ yarn-error.log*
 # Mac system files
 .DS_Store
 
-# Excel output
-*.xlsx
+# File output
+CanAm_Pricing*
 
 # VSCode settings (optional)
 .vscode/

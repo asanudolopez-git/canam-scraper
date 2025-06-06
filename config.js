@@ -1,5 +1,5 @@
 const config = {
-  outputFile: 'CanAm_Pricing.xlsx',
+  outputFile: 'CanAm_Pricing',
   columns: [
     { header: 'Year', key: 'Year', width: 20 },
     { header: 'YearHref', key: 'YearHref', width: 10 },
