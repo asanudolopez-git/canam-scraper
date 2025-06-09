@@ -4,9 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "node scrapeJSON.js",
-    "start:JSON": "node scrapeJSON.js",
-    "start:csv": "node scrapeCSV.js",
-    "start:excel": "node scrapeExcel.js"
+    "start:JSON": "node scrapeJSON.js"
   },
   "dependencies": {
     "csv-stringify": "^6.5.2",

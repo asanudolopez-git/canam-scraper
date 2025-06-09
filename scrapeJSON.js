@@ -9,6 +9,9 @@ import { getYears, getMakes, getModels, getPartsFromModel } from './navigate.js'
 import { withRetry } from './utils.js';
 import config from './config.js';
 
+
+const startTime = Date.now();
+
 let numberOfYears = 0;
 let numberOfMakes = 0;
 let numberOfModels = 0;
@@ -60,6 +63,7 @@ process.on('SIGINT', async () => {
           continue;
         }
         const jsonLine = JSON.stringify(row) + ',\n';
+        fs.appendFileSync('scrape.log', `Saved part: ${row.PartNumber}\n`);
         fs.appendFileSync(fileName, jsonLine);
       } catch (err) {
         console.error('Failed to add row:', row, err.message);
@@ -67,12 +71,12 @@ process.on('SIGINT', async () => {
     }
   }
   fs.appendFileSync(fileName, '{}\n]');
+  console.log(`Total runtime: ${((Date.now() - startTime) / 1000).toFixed(2)} seconds`);
   console.log("Exiting gracefully...");
   process.exit(0);
 });
 
 const run = async () => {
-  const startTime = Date.now();
   const years = getYears()
     .filter(y => !completedYears.includes(String(y.year)));
   numberOfYears = years.length;
