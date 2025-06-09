@@ -97,7 +97,7 @@ const run = async () => {
       try {
         await withRetry(() => yearPage.goto(year.href), 3, 1000, `Navigating to year: ${year.href}`);
         let makes = await getMakes(yearPage)
-        makes = makes.filter(m => !completedMakes.includes(String(m.make)));
+        makes = makes.filter(m => !completedMakes.includes(`${year}/${m.make}`));
         numberOfMakes += makes.length;
         console.log(`Found ${makes.length} makes for year: ${year.year}.`);
         if (completedMakes.size > 0) {
