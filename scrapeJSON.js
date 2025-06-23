@@ -1,7 +1,6 @@
 import puppeteer from 'puppeteer';
 import dotenv from 'dotenv';
 import fs from 'fs';
-import pLimit from 'p-limit';
 dotenv.config();
 
 import login from './login.js';
@@ -9,6 +8,75 @@ import { getYears, getMakes, getModels, getPartsFromModel } from './navigate.js'
 import { withRetry } from './utils.js';
 import config from './config.js';
 
+const processYearMakeModelParts = async (yearMakeModelPage, year, make, model, buffer = {}) => {
+  const yearMakeModelId = `${year.year}/${make.make}/${model.model}`;
+  try {
+    const parts = await getPartsFromModel(yearMakeModelPage, year, make, model)
+    parts.forEach(part => {
+      fs.appendFileSync('scrape.log', `Saved part: ${part.PartNumber}\n`);
+      buffer.push && buffer.push(part);
+    });
+  } catch (err) {
+    console.error(`Error getting parts for yearMakeModel: ${yearMakeModelId}`, err);
+    return [];
+  }
+  console.log(`Found ${parts.length} parts for yearMakeModel: ${yearMakeModelId}.`);
+};
+
+const processYearMakeModels = async (yearMakePage, year, make, buffer = {}) => {
+  const models = await getModels(yearMakePage);
+  console.log(`Found ${models.length} models for yearMake: ${yearMake}.`);
+  for (const model of models) {
+    const id = `${year.year}/${make.make}/${model.model}`;
+    console.log(`Processing yearMakeModel: ${id}`);
+    const page = await browser.newPage();
+    try {
+      await withRetry(() => page.goto(make.href), 3, 1000, `Navigating to yearMakeModel: ${id}`);
+      const parts = await processYearMakeModelParts(page, year, make, model);
+      console.log(`Found ${parts.length} parts for yearMakeModel: ${id}.`);
+      fs.appendFileSync('scrape.log', `Saved yearMakeModel: ${id}\n`);
+    } catch (err) {
+      console.error(`Error processing yearMakeModel: ${id}`, err);
+      return [];
+    }
+  };
+};
+
+const processYearMakes = async (yearPage, year, buffer = {}) => {
+  const makes = await getMakes(yearPage);
+  console.log(`Found ${makes.length} makes for year: ${year.year}.`);
+  for (const make of makes) {
+    const id = `${year.year}/${make.make}`;
+    console.log(`Processing yearMake: ${id}`);
+    const page = await browser.newPage();
+    try {
+      await withRetry(() => page.goto(make.href), 3, 1000, `Navigating to yearMake: ${id}`);
+      const models = await processYearMakeModels(page, year, make);
+      console.log(`Found ${models.length} models for yearMake: ${id}.`);
+      fs.appendFileSync('scrape.log', `Saved yearMake: ${id}\n`);
+    } catch (err) {
+      console.error(`Error processing yearMake: ${id}`, err);
+      return [];
+    }
+  };
+};
+
+const processYears = async (years = [], buffer = {}) => {
+  for (const year of years) {
+    const id = year.year;
+    console.log(`Processing year: ${id}`);
+    const page = await browser.newPage();
+    try {
+      await withRetry(() => page.goto(year.href), 3, 1000, `Navigating to year: ${id}`);
+      const yearMakes = await processYearMakes(page, year);
+      console.log(`Found ${makes.length} makes for year: ${id}.`);
+      fs.appendFileSync('scrape.log', `Saved year: ${id}\n`);
+    } catch (err) {
+      console.error(`Error processing year: ${id}`, err);
+      return [];
+    }
+  };
+};
 
 const startTime = Date.now();
 
@@ -17,9 +85,9 @@ let numberOfMakes = 0;
 let numberOfModels = 0;
 let numberOfParts = 0;
 let totalRowsSaved = 0;
-const yearLimit = pLimit(3);
-const makeLimit = pLimit(3);
-const modelLimit = pLimit(3);
+const yearLimit = pLimit(1);
+const makeLimit = pLimit(1);
+const modelLimit = pLimit(1);
 let buffer = [];
 const fileName = `${config.outputFile}.json`;
 
@@ -48,8 +116,17 @@ if (fs.existsSync('scrape.log')) {
     }
   }
 }
-
-fs.writeFileSync(fileName, '[\n');
+if (!fs.existsSync(fileName)) {
+  fs.writeFileSync(fileName, '[\n');
+} else {
+  const lastChar = fs.readFileSync(fileName, 'utf-8').trim().slice(-1);
+  if (lastChar !== ']') {
+    console.warn(`Warning: ${fileName} does not end with ']', appending it now.`);
+    // fs.appendFileSync(fileName, '{}\n]');
+  } else {
+    console.log(`Resuming from existing file: ${fileName}`);
+  }
+}
 
 process.on('SIGINT', async () => {
   console.warn('\n[CTRL+C] Interrupt received. Flushing buffer and saving...');
@@ -70,7 +147,7 @@ process.on('SIGINT', async () => {
       }
     }
   }
-  fs.appendFileSync(fileName, '{}\n]');
+  // fs.appendFileSync(fileName, '{}\n]');
   console.log(`Total runtime: ${((Date.now() - startTime) / 1000).toFixed(2)} seconds`);
   console.log("Exiting gracefully...");
   process.exit(0);
@@ -172,7 +249,7 @@ const run = async () => {
                 }))
               );
               fs.appendFileSync('scrape.log', `Saved yearMake: ${year.year}/${make.make}\n`);
-              console.log(`Completed processing make: ${make.make}`);
+              console.log(`Completed processing yearMake: ${make.make}`);
             } catch (err) {
               console.error(`Error processing make ${make.make}:`, err.message);
             } finally {
@@ -197,7 +274,7 @@ const run = async () => {
       fs.appendFileSync(fileName, jsonLine);
     });
   }
-  console.log(`\u2714 Scraped ${numberOfModels} models and ${numberOfParts} parts from ${numberOfMakes} makes.`);
+  console.log(`\u2714 Scraped ${numberOfYears} years, ${numberOfModels} models and ${numberOfParts} parts from ${numberOfMakes} makes.`);
   const duration = (Date.now() - startTime) / 1000;
   console.log(`Total runtime: ${duration.toFixed(2)} seconds`);
   console.log(`Saving JSON file to ${fileName}...`);

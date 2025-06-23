@@ -3,13 +3,12 @@
   "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "start": "node scrapeJSON.js",
+    "start": "node index.js",
     "start:JSON": "node scrapeJSON.js"
   },
   "dependencies": {
     "csv-stringify": "^6.5.2",
     "exceljs": "^4.3.0",
-    "p-limit": "^6.2.0",
     "puppeteer": "^21.0.0"
   },
   "devDependencies": {

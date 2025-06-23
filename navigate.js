@@ -1,9 +1,14 @@
 import { extractPartsFromTableRows } from "./utils.js";
-const FIRST_YEAR = 2000;
+const YEAR_1 = 2000;
+
+export const FIRST_YEAR = {
+  year: YEAR_1,
+  href: `https://www.canamautoglass.ca/nags/${YEAR_1}/`
+};
 
 export const getYears = () => {
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: currentYear - FIRST_YEAR + 1 }, (_, i) => FIRST_YEAR + i);
+  const years = Array.from({ length: currentYear - FIRST_YEAR.year + 1 }, (_, i) => FIRST_YEAR.year + i);
   return years.map(year => ({
     year,
     href: `https://www.canamautoglass.ca/nags/${year}/`
