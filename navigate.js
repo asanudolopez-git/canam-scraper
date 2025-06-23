@@ -1,5 +1,5 @@
 import { extractPartsFromTableRows } from "./utils.js";
-const YEAR_1 = 2000;
+const YEAR_1 = 2024;
 
 export const FIRST_YEAR = {
   year: YEAR_1,
@@ -35,6 +35,10 @@ export const getModels = async (page) => {
 
 export const getPartsFromModel = async (page, year, make, model) => {
   const rows = await page.$$('.vehicleTable tbody tr');
-  console.log(`Found ${rows.length} parts for model: ${model.model}`);
+  if (rows.length === 0) {
+    console.warn(`No parts found for model: ${model.model}`);
+    return [];
+  }
+  console.log(`Extracting parts for model: ${model.model}`);
   return await extractPartsFromTableRows(rows, year, make, model);
 };

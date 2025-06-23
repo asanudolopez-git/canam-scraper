@@ -26,7 +26,7 @@ const main = async () => {
   };
 
   const buffer = {
-    scraped: (id) => scrapedJson[id] = true,
+    scraped: (id) => scrapeJSON[id] = true,
     data: [],
     flush() {
       console.log('Flushing buffer...');
@@ -34,9 +34,7 @@ const main = async () => {
       console.log(`Scraped JSON length: ${Object.keys(scrapeJSON).length}`);
       this.data.forEach(part => this.scraped(part.PartNumber));
       fs.writeFileSync('parts.json', JSON.stringify({ data: this.data }, null, 2));
-      console.log('')
       fs.writeFileSync('scrape.json', JSON.stringify(scrapeJSON, null, 2));
-      this.data = [];
     },
     push(data) {
       console.log(`Pushing data for part: ${data.PartNumber}`);
@@ -72,6 +70,7 @@ const main = async () => {
       for (const part of parts) {
         buffer.push && buffer.push(part);
       }
+      return parts;
     } catch (err) {
       console.error(`Error getting parts for yearMakeModel: ${yearMakeModelId}`, err);
     }
@@ -89,7 +88,7 @@ const main = async () => {
       console.log(`Processing yearMakeModel: ${id}`);
       const page = await browser.newPage();
       try {
-        await withRetry(() => page.goto(make.href), 3, 1000, `Navigating to yearMakeModel: ${id}`);
+        await withRetry(() => page.goto(model.href), 3, 1000, `Navigating to yearMakeModel: ${id}`);
         const parts = await processYearMakeModelParts(page, year, make, model, scrapeJSON);
         console.log(`Found ${parts.length} parts for yearMakeModel: ${id}.`);
         scrapeJSON[id] = true;
