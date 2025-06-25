@@ -1,8 +1,15 @@
+import puppeteer from 'puppeteer';
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { withRetry } from './utils.js';
 
-const login = async (page) => {
+const withLogin = async (fn) => {
+  const browser = await puppeteer.launch({
+    headless: 'new',
+  });
+  const page = await browser.newPage();
   await page.goto('https://www.canamautoglass.ca/?redirect=/');
-
   await page.type('input[name="username"]', process.env.CANAM_USER);
   await page.type('input[name="password"]', process.env.CANAM_PASS);
 
@@ -17,6 +24,9 @@ const login = async (page) => {
   );
 
   console.log('Login successful');
+  await fn(page);
+  await browser.close();
+  console.log('Browser closed');
 };
 
-export default login;
+export default withLogin;
