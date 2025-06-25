@@ -29,9 +29,6 @@ const main = async () => {
     scraped: (id) => scrapeJSON[id] = true,
     data: [],
     flush() {
-      console.log('Flushing buffer...');
-      console.log(`Buffer length: ${this.data.length}`);
-      console.log(`Scraped JSON length: ${Object.keys(scrapeJSON).length}`);
       this.data.forEach(part => this.scraped(part.PartNumber));
       fs.writeFileSync('parts.json', JSON.stringify({ data: this.data }, null, 2));
       fs.writeFileSync('scrape.json', JSON.stringify(scrapeJSON, null, 2));
@@ -92,6 +89,7 @@ const main = async () => {
         const parts = await processYearMakeModelParts(page, year, make, model, scrapeJSON);
         console.log(`Found ${parts.length} parts for yearMakeModel: ${id}.`);
         scrapeJSON[id] = true;
+        return parts;
       } catch (err) {
         console.error(`Error processing yearMakeModel: ${id}`, err);
       }
@@ -112,7 +110,7 @@ const main = async () => {
       try {
         await withRetry(() => page.goto(make.href), 3, 1000, `Navigating to yearMake: ${id}`);
         const models = await processYearMakeModels(page, year, make, scrapeJSON);
-        console.log(`Found ${models.length} models for yearMake: ${id}.`);
+        // console.log(`Found ${models.length} models for yearMake: ${id}.`);
         scrapeJSON[id] = true;
       } catch (err) {
         console.error(`Error processing yearMake: ${id}`, err);
@@ -132,12 +130,11 @@ const main = async () => {
       try {
         await withRetry(() => page.goto(year.href), 3, 1000, `Navigating to year: ${id}`);
         const yearMakes = await processYearMakes(page, year, scrapeJSON);
-        console.log(`Found ${yearMakes.length} makes for year: ${id}.`);
+        // console.log(`Found ${yearMakes.length} makes for year: ${id}.`);
         scrapeJSON[id] = true;
       } catch (err) {
         console.error(`Error processing year: ${id}`, err);
       }
-
     };
   };
 
