@@ -1,8 +1,9 @@
 import puppeteer from 'puppeteer';
 import dotenv from 'dotenv';
-dotenv.config();
 
 import { withRetry } from './utils.js';
+
+dotenv.config();
 
 const withLogin = async (fn) => {
   const browser = await puppeteer.launch({

@@ -1,15 +1,12 @@
 import dotenv from 'dotenv';
 import fs from 'fs';
 dotenv.config();
-
 import withLogin from './withLogin.js';
-import { getHrefsForYears } from './navigation.js';
+import config from './config.js';
 
-const populateHrefs = async () => {
-  withLogin(async page => {
-    const hrefs = await getHrefsForYears(2000, 2025, page);
-    fs.writeFileSync('hrefs.json', JSON.stringify(hrefs, null, 2));
-  });
+const scrapeParts = async () => {
+  // withLogin(async page => {
+  const hrefs = JSON.parse(fs.readFileSync(config.hrefsFileName, 'utf8'));
+  console.log(`Loaded ${Object.keys(hrefs).length} hrefs from ${config.hrefsFileName}`);
 }
-
-const scrapeParts = async () => { }
+scrapeParts();

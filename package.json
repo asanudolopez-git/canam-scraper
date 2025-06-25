@@ -3,7 +3,8 @@
   "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "start": "node index2.js"
+    "start": "node index2.js",
+    "prepare": "node prepare.js"
   },
   "dependencies": {
     "csv-stringify": "^6.5.2",

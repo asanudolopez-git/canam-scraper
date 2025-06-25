@@ -1,5 +1,7 @@
 const config = {
   outputFileName: 'CanAm_Pricing',
+  hrefsFileName: 'fixtures/hrefs.json',
+  partsTemplateOutput: 'fixtures/partsTemplate.json',
   // columns: [
   //   { header: 'Year', key: 'Year', width: 20 },
   //   { header: 'YearHref', key: 'YearHref', width: 10 },
