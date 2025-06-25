@@ -8,13 +8,14 @@ const populateHrefs = async () => {
   withLogin(async page => {
     const hrefs = await getHrefsForYears(2000, 2025, page);
     fs.writeFileSync(config.hrefsFileName, JSON.stringify(hrefs, null, 2));
-    populateModelPartTemplates(hrefs);
+    populateModelsByYear(hrefs);
   });
 }
 
-const populateModelPartTemplates = hrefs => {
-  const parts = [];
+const populateModelsByYear = hrefs => {
+  const modelsByYear = {};
   Object.entries(hrefs).forEach(([year, { yearHref, makes }]) => {
+    const parts = [];
     Object.entries(makes).forEach(([make, { href: makeHref, models }]) => {
       Object.entries(models).forEach(([model, { href: modelHref }]) => {
         const part = { ...PARTS_TEMPLATE };
@@ -27,15 +28,15 @@ const populateModelPartTemplates = hrefs => {
         parts.push(part);
       });
     });
+    modelsByYear[year] = parts;
   });
-  fs.writeFileSync(config.partsTemplateOutput, JSON.stringify(parts, null, 2));
-  console.log(`Wrote ${parts.length} parts to ${config.partsTemplateOutput}`);
+  fs.writeFileSync(config.modelsByYear, JSON.stringify(modelsByYear, null, 2));
 }
 
 const prepare = async () => {
   await populateHrefs();
   console.log(`Hrefs populated in ${config.hrefsFileName}`);
-  console.log(`Parts template populated in ${config.partsTemplateOutput}`);
+  console.log(`Models template populated in ${config.modelsByYear}`);
 }
 prepare()
   .catch(err => {

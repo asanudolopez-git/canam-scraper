@@ -46,66 +46,27 @@ export const getHrefsForYears = async (start = YEAR_1, end = CURRENT_YEAR, page)
   return hrefs;
 };
 
+export const getPartsFromModelHref = async (page, href) => {
+  console.log({ page, href });
+  await withRetry(() => page.goto(href), 3, 1000, `Navigating to href: ${href}`);
+  const rows = await page.$$('.vehicleTable tbody tr');
+  for (const row of rows) {
+    // Only add rows that have a part number link
+    const partNumber = await row.$eval('.partNumber a', el => el && el.innerText.trim());
+    if (!PART_NUMBER_REGEX.test(partNumber)) { continue; };
 
-// export const extractPartsFromTableRows = async (rows, year, make, model) => {
-//   const data = [];
+    const description = await row.$eval('.description', el => el.innerText.trim());
+    // Ignore MSRP
+    const price = await row.$eval('.price', el => el.innerText.trim().split(/\s+/)[0]);
+    const availability = await row.$eval('.availability', element => element.innerText.trim());
+    const ships = await row.$eval('.ships', element => element.innerText.trim());
 
-//   for (const row of rows) {
-//     try {
-//       // Only add rows that have a part number link
-//       const partNumber = await row.$eval('.partNumber a', el => el && el.innerText.trim());
-//       if (!startsWithFWorDW(partNumber)) { continue; };
-//       const description = await row.$eval('.description', el => el.innerText.trim());
-//       // Ignore MSRP
-//       const price = await row.$eval('.price', el => el.innerText.trim().split(/\s+/)[0]);
-
-//       const availability = await row.$eval('.availability', element => element.innerText.trim());
-//       const ships = await row.$eval('.ships', element => element.innerText.trim());
-//       data.push({
-//         Year: year.year,
-//         YearHref: year.href,
-//         Make: make.make,
-//         MakeHref: make.href,
-//         Model: model.model,
-//         ModelHref: model.href,
-//         Body: '',
-//         BodyHref: '',
-//         PartNumber: partNumber,
-//         Description: description,
-//         WebsitePrice1_CanAm: price,
-//         Availability: availability,
-//         Ships: ships,
-//       });
-//     } catch { }
-//   }
-//   if (data.length === 0) {
-//     console.warn(`No parts found for model: ${model.model}`);
-//   } else {
-//     console.log(`Successfully scraped ${data.length} parts for model: ${model.model}`);
-//   }
-//   return data;
-// };
-
-// const getPartsFromModelHref = async href => {
-//   await withRetry(() => page.goto(href), 3, 1000, `Navigating to href: ${href}`);
-//   const rows = await page.$$('.vehicleTable tbody tr');
-//   for (const row of rows) {
-//     // Only add rows that have a part number link
-//     const partNumber = await row.$eval('.partNumber a', el => el && el.innerText.trim());
-//     if (!PART_NUMBER_REGEX.test(partNumber)) { continue; };
-
-//     const description = await row.$eval('.description', el => el.innerText.trim());
-//     // Ignore MSRP
-//     const price = await row.$eval('.price', el => el.innerText.trim().split(/\s+/)[0]);
-//     const availability = await row.$eval('.availability', element => element.innerText.trim());
-//     const ships = await row.$eval('.ships', element => element.innerText.trim());
-
-//     const part = {
-//       PartNumber: partNumber,
-//       Description: description,
-//       WebsitePrice1_CanAm: price,
-//       Availability: availability,
-//       Ships: ships
-//     }
-//   }
-// };
+    const part = {
+      PartNumber: partNumber,
+      Description: description,
+      WebsitePrice1_CanAm: price,
+      Availability: availability,
+      Ships: ships
+    }
+  }
+};
