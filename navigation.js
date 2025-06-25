@@ -49,24 +49,32 @@ export const getHrefsForYears = async (start = YEAR_1, end = CURRENT_YEAR, page)
 export const getPartsFromModelHref = async (page, href) => {
   console.log({ page, href });
   await withRetry(() => page.goto(href), 3, 1000, `Navigating to href: ${href}`);
+  console.log({ rows });
   const rows = await page.$$('.vehicleTable tbody tr');
+  const parts = [];
   for (const row of rows) {
-    // Only add rows that have a part number link
-    const partNumber = await row.$eval('.partNumber a', el => el && el.innerText.trim());
-    if (!PART_NUMBER_REGEX.test(partNumber)) { continue; };
+    try {
+      // Only add rows that have a part number link
+      const partNumber = await row.$eval('.partNumber a', el => el && el.innerText.trim());
+      if (!PART_NUMBER_REGEX.test(partNumber)) { continue; };
 
-    const description = await row.$eval('.description', el => el.innerText.trim());
-    // Ignore MSRP
-    const price = await row.$eval('.price', el => el.innerText.trim().split(/\s+/)[0]);
-    const availability = await row.$eval('.availability', element => element.innerText.trim());
-    const ships = await row.$eval('.ships', element => element.innerText.trim());
+      const description = await row.$eval('.description', el => el.innerText.trim());
+      // Ignore MSRP
+      const price = await row.$eval('.price', el => el.innerText.trim().split(/\s+/)[0]);
+      const availability = await row.$eval('.availability', element => element.innerText.trim());
+      const ships = await row.$eval('.ships', element => element.innerText.trim());
 
-    const part = {
-      PartNumber: partNumber,
-      Description: description,
-      WebsitePrice1_CanAm: price,
-      Availability: availability,
-      Ships: ships
+      parts.push({
+        PartNumber: partNumber,
+        Description: description,
+        WebsitePrice1_CanAm: price,
+        Availability: availability,
+        Ships: ships
+      })
+    } catch (error) {
+      console.error(`Error processing row: ${error.message}`);
+      continue; // Skip this row and continue with the next one
     }
   }
+  return parts;
 };

@@ -23,10 +23,13 @@ const scrapeParts = async () => {
       [models[0]].forEach(async model => {
         const href = model.ModelHref;
         console.log(`Scraping parts for model: ${model.Model} (${href})`);
-        let parts = await getPartsFromModelHref(page, href);
-        parts = parts.map(part => ({ ...model, ...part }));
+        const parts = await getPartsFromModelHref(page, href);
         console.log(`Found ${parts.length} parts for model ${model.ModelName}.`);
-        partsForYear.push(...parts);
+        partsForYear.push(
+          ...parts.map(
+            part => ({ ...model, ...part })
+          )
+        );
       });
       partsByYear[year] = partsForYear;
       console.log(`Found ${partsForYear.length} parts for year ${year}.`);

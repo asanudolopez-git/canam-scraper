@@ -25,7 +25,7 @@ const withLogin = async (fn) => {
   );
 
   console.log('Login successful');
-  await fn(page);
+  await withRetry(async () => fn(page), 3, 3000, 'Executing provided function');
   await browser.close();
   console.log('Browser closed');
 };
