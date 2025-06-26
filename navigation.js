@@ -47,9 +47,7 @@ export const getHrefsForYears = async (start = YEAR_1, end = CURRENT_YEAR, page)
 };
 
 export const getPartsFromModelHref = async (page, href) => {
-  console.log({ page, href });
   await withRetry(() => page.goto(href), 3, 1000, `Navigating to href: ${href}`);
-  console.log({ rows });
   const rows = await page.$$('.vehicleTable tbody tr');
   const parts = [];
   for (const row of rows) {
@@ -72,7 +70,6 @@ export const getPartsFromModelHref = async (page, href) => {
         Ships: ships
       })
     } catch (error) {
-      console.error(`Error processing row: ${error.message}`);
       continue; // Skip this row and continue with the next one
     }
   }

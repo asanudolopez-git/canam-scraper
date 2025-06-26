@@ -2,7 +2,7 @@ const config = {
   outputFileName: 'CanAm_Pricing',
   hrefsFileName: 'fixtures/hrefs.json',
   modelsByYear: 'fixtures/modelsByYear.json',
-  partsByYear: 'fixtures/partsByYear.json',
+  partsByModel: 'fixtures/partsByModel.json',
 };
 
 export default config;
