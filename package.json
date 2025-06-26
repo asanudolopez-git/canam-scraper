@@ -3,7 +3,7 @@
   "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "start": "node index2.js",
+    "start": "node index.js",
     "prepare": "node prepare.js"
   },
   "dependencies": {
