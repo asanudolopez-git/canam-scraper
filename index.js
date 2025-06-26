@@ -3,48 +3,46 @@ import fs from 'fs';
 dotenv.config();
 import withLogin from './withLogin.js';
 import config from './config.js';
-import { getPartsFromModelHref } from './navigation.js';
-// import { YEAR_1, CURRENT_YEAR } from './constants.js';
+import { getPartsFromVehicleHref } from './navigation.js';
+// import { getYearRange } from './constants.js';
 
 const scrapeParts = async () => {
   withLogin(async page => {
-    // const startYear = process.env.YEAR_1 || YEAR_1;
-    // const endYear = process.env.END_YEAR || CURRENT_YEAR;
-    // const years = [...Array(endYear - startYear + 1).keys()].map(i => i + startYear);
+    // const years = getYearRange;
     const years = [2025]; // For testing, you can set this to a specific year or range
 
-    const modelsByYear = JSON.parse(fs.readFileSync(config.modelsByYear, 'utf8'));
-    const partsByModel = JSON.parse(fs.readFileSync(config.partsByModel, 'utf8')) || {};
+    const vehiclesByYear = JSON.parse(fs.readFileSync(config.vehiclesByYearFilename, 'utf8'));
+    const partsByVehicle = JSON.parse(fs.readFileSync(config.partsByVehicleHrefFilename, 'utf8')) || {};
     for (const year of years) {
-      const models = modelsByYear[year] || [];
-      if (models.length == 0) { return; }
+      const vehicles = vehiclesByYear[year] || [];
+      if (vehicles.length == 0) { return; }
 
-      console.log(`Scraping parts for ${models.length} models for year ${year}...`);
-      for (const modelByYear of models) {
-        const { Make: make, Model: model, ModelHref: href } = modelByYear;
-        const modelId = `${year}/${make}/${model}`;
-        const modelParts = partsByModel[modelId] || [];
+      console.log(`Scraping parts for ${vehicles.length} vehicles for year ${year}...`);
+      for (const vehicleByYear of vehicles) {
+        const { Make: make, vehicle: vehicle, vehicleHref: vehicleHref, BodyHref: bodyHref } = vehicleByYear;
+        const vehicleId = bodyHref || vehicleHref;
+        const vehicleParts = partsByVehicle[vehicleId] || [];
         // Indicates it has already been scraped. Include boolean here for optional updates
-        if (modelParts.length) {
-          console.log(`Model ${modelId} has already been scraped, skipping...`)
+        if (vehicleParts.length) {
+          console.log(`${vehicleParts} has already been scraped, skipping...`)
           continue;
         }
 
         try {
-          console.log(`Scraping parts for: ${modelId} (${href})`);
-          const parts = await getPartsFromModelHref(page, href);
-          console.log(`Found ${parts.length} parts for ${modelId}.`);
-          modelParts.push(...parts.map(
-            part => ({ ...modelByYear, ...part })
+          console.log(`Scraping parts for: ${vehicleParts}`);
+          const parts = await getPartsFromVehicleHref(page, href);
+          console.log(`Found ${parts.length} parts for ${vehicleId}.`);
+          vehicleParts.push(...parts.map(
+            part => ({ ...vehicleByYear, ...part })
           ));
-          partsByModel[modelId] = modelParts;
-          fs.writeFileSync(config.partsByModel, JSON.stringify(partsByModel, null, 2));
+          partsByVehicle[vehicleId] = vehicleParts;
+          fs.writeFileSync(config.partsByVehicleHrefFilename, JSON.stringify(partsByVehicle, null, 2));
         } catch (e) {
-          console.log(`Error scraping parts for: ${modelId}, message:`, e.message);
+          console.log(`Error scraping parts for: ${vehicleId}, message:`, e.message);
         }
       };
     };
-    console.log(`Parts scraped and saved to ${config.partsByModel}`);
+    console.log(`Parts scraped and saved to ${config.partsByVehicleHrefFilename}`);
   });
 }
 scrapeParts();

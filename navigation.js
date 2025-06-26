@@ -2,46 +2,92 @@ import { withRetry } from "./utils.js";
 
 import { YEAR_1, CURRENT_YEAR, CANAM_BASE_URL, PART_NUMBER_REGEX } from "./constants.js";
 
-const getModelHrefsForMake = async (page) => {
-  return await page.evaluate(() =>
+
+const getBodyStyleHrefsForModel = async page => {
+  try {
+    return await page.evaluate(() =>
+      Array.from(document.querySelectorAll('.list-group-item.nagsPill'))
+        .reduce((acc, el) => ({ ...acc, [el.innerText.trim()]: { href: el.href } }), {})
+    );
+  } catch (e) {
+    console.log("Error processing bodyStyles", e.message)
+    throw e;
+  }
+}
+
+const getModelHrefsForMake = async page => {
+  const models = await page.evaluate(() =>
     Array.from(document.querySelectorAll('.list-group-item.nagsPill'))
       .reduce((acc, el) => ({ ...acc, [el.innerText.trim()]: { href: el.href } }), {})
   );
+  for (const m of Object.entries(models)) {
+    try {
+      const [model, { href }] = m;
+      console.log(`Processing model: ${model}...`);
+      await withRetry(() => page.goto(href), 3, 1000, `Navigating to model: ${model}`);
+      const bodyStyles = await getBodyStyleHrefsForModel(page);
+      models[model] = {
+        href,
+        bodyStyles
+      }
+
+      console.log(`Found ${Object.keys(bodyStyles).length} bodyStyles for model: ${model}.`)
+    } catch (e) {
+      console.log(`Error processing model: ${model}`, e.message);
+      continue;
+    }
+  }
+  return models;
 };
 
-const getMakeHrefsForYear = async (page) => {
+const getMakeHrefsForYear = async page => {
   const makes = await page.evaluate(() =>
     Array.from(document.querySelectorAll('.list-group-item.nagsPill'))
       .reduce((acc, el) => ({ ...acc, [el.innerText.trim()]: { href: el.href, models: {} } }), {})
   );
   for (const m of Object.entries(makes)) {
-    const [make, { href }] = m;
-    console.log(`Processing make: ${make}...`);
-    await withRetry(() => page.goto(href), 3, 1000, `Navigating to make: ${make}`);
-    const models = await getModelHrefsForMake(page);
-    console.log(`Found ${Object.keys(models).length} models for make: ${make}.`)
-    makes[make] = {
-      href,
-      models
-    };
+    try {
+      const [make, { href }] = m;
+      console.log(`Processing make: ${make}...`);
+      await withRetry(() => page.goto(href), 3, 1000, `Navigating to make: ${make}`);
+      const models = await getModelHrefsForMake(page);
+      makes[make] = {
+        href,
+        models
+      };
+      console.log(`Found ${Object.keys(models).length} models for make: ${make}.`)
+    } catch (e) {
+      console.log(`Error processing make: ${make}`, e.message);
+      continue;
+    }
   }
   return makes;
 };
 
-export const getHrefsForYears = async (start = YEAR_1, end = CURRENT_YEAR, page) => {
-  const hrefs = {}
+export const getHrefsForYears = async (start = YEAR_1, end = CURRENT_YEAR, page, hrefs = {}) => {
   const years = [...Array(end - start + 1).keys()].map(i => i + start);
   console.log(`Processing years from ${start} to ${end}.`);
   for (const year of years) {
-    const href = `${CANAM_BASE_URL}${year}/`;
-    console.log(`Processing year: ${year}...`);
-    await withRetry(() => page.goto(href), 3, 1000, `Navigating to year: ${year}`);
-    const makes = await getMakeHrefsForYear(page);
-    console.log(`Found ${Object.keys(makes).length} makes for year: ${year}.`);
-    hrefs[year] = {
-      href,
-      makes
-    };
+    if (hrefs[year]) {
+      console.log(`${year} has already been done, skipping...`)
+      continue;
+    }
+
+    try {
+      const href = `${CANAM_BASE_URL}${year}/`;
+      console.log(`Processing year: ${year}...`);
+      await withRetry(() => page.goto(href), 3, 1000, `Navigating to year: ${year}`);
+      const makes = await getMakeHrefsForYear(page);
+      console.log({ makes })
+      hrefs[year] = {
+        href,
+        makes
+      };
+      console.log(`Found ${Object.keys(makes).length} makes for year: ${year}.`);
+    } catch (e) {
+      console.log(`Error processing year: ${year}`, e.message);
+      continue;
+    }
   }
   return hrefs;
 };
