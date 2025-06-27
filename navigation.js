@@ -92,7 +92,7 @@ export const getHrefsForYears = async (start = YEAR_1, end = CURRENT_YEAR, page,
   return hrefs;
 };
 
-export const getPartsFromModelHref = async (page, href) => {
+export const getPartsFromVehicleHref = async (page, href) => {
   await withRetry(() => page.goto(href), 3, 1000, `Navigating to href: ${href}`);
   const rows = await page.$$('.vehicleTable tbody tr');
   const parts = [];
