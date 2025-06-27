@@ -8,6 +8,7 @@ const populateVehicleHrefs = async (existingHrefs = {}) => {
   withLogin(async page => {
     const hrefs = await getHrefsForYears(2000, 2025, page, existingHrefs);
     fs.writeFileSync(config.hrefsFileName, JSON.stringify(hrefs, null, 2));
+    populateVehiclesByYear(hrefs);
   });
 }
 
