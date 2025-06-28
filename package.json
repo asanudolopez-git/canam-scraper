@@ -4,13 +4,16 @@
   "version": "1.0.0",
   "scripts": {
     "start": "node index.js",
-    "prepare": "node prepare.js"
+    "lint": "eslint",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./config/jest.config.js"
   },
   "dependencies": {
-    "csv-stringify": "^6.5.2",
     "puppeteer": "^21.0.0"
   },
   "devDependencies": {
-    "dotenv": "^16.0.3"
+    "dotenv": "^16.0.3",
+    "jest": "^30.0.3",
+    "jest-environment-jsdom": "^30.0.2",
+    "jsdom": "^26.1.0"
   }
 }

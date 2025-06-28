@@ -1,9 +1,53 @@
-import { withRetry } from "./utils.js";
+export const withRetry = async (fn, retries = 3, delay = 1000, label = '') => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      console.warn(`Attempt ${i + 1} failed for ${label || 'task'}: ${e.message}`);
+      if (i === retries - 1) throw e;
+      await new Promise(res => setTimeout(res, delay * (i + 1)));
+    }
+  }
+};
 
-import { YEAR_1, CURRENT_YEAR, CANAM_BASE_URL, PART_NUMBER_REGEX } from "./constants.js";
+export const getYearRange = (start = YEAR_1, end = CURRENT_YEAR) => [...Array(end - start + 1).keys()].map(i => i + start);
 
+const YEAR_1 = 2000;
+const CURRENT_YEAR = new Date().getFullYear();
+const CANAM_BASE_URL = 'https://www.canamautoglass.ca/nags/';
+const PART_NUMBER_REGEX = /^(FW|DW)/;
 
-const getBodyStyleHrefsForModel = async page => {
+export const getPartsFromVehicleHref = async (page, href) => {
+  await withRetry(() => page.goto(href), 3, 1000, `Navigating to href: ${href}`);
+  const rows = await page.$$('.vehicleTable tbody tr');
+  const parts = [];
+  for (const row of rows) {
+    try {
+      // Only add rows that have a part number link
+      const partNumber = await row.$eval('.partNumber a', el => el && el.innerText.trim());
+      if (!PART_NUMBER_REGEX.test(partNumber)) { continue; };
+
+      const description = await row.$eval('.description', el => el.innerText.trim());
+      // Ignore MSRP
+      const price = await row.$eval('.price', el => el.innerText.trim().split(/\s+/)[0]);
+      const availability = await row.$eval('.availability', element => element.innerText.trim());
+      const ships = await row.$eval('.ships', element => element.innerText.trim());
+
+      parts.push({
+        PartNumber: partNumber,
+        Description: description,
+        WebsitePrice1_CanAm: price,
+        Availability: availability,
+        Ships: ships
+      })
+    } catch (error) {
+      continue; // Skip this row and continue with the next one
+    }
+  }
+  return parts;
+};
+
+export const getBodyStyleHrefsForModel = async page => {
   try {
     return await page.evaluate(() =>
       Array.from(document.querySelectorAll('.list-group-item.nagsPill'))
@@ -15,7 +59,7 @@ const getBodyStyleHrefsForModel = async page => {
   }
 }
 
-const getModelHrefsForMake = async page => {
+export const getModelHrefsForMake = async page => {
   const models = await page.evaluate(() =>
     Array.from(document.querySelectorAll('.list-group-item.nagsPill'))
       .reduce((acc, el) => ({ ...acc, [el.innerText.trim()]: { href: el.href } }), {})
@@ -40,7 +84,7 @@ const getModelHrefsForMake = async page => {
   return models;
 };
 
-const getMakeHrefsForYear = async page => {
+export const getMakeHrefsForYear = async page => {
   const makes = await page.evaluate(() =>
     Array.from(document.querySelectorAll('.list-group-item.nagsPill'))
       .reduce((acc, el) => ({ ...acc, [el.innerText.trim()]: { href: el.href, models: {} } }), {})
@@ -90,34 +134,4 @@ export const getHrefsForYears = async (start = YEAR_1, end = CURRENT_YEAR, page,
     }
   }
   return hrefs;
-};
-
-export const getPartsFromVehicleHref = async (page, href) => {
-  await withRetry(() => page.goto(href), 3, 1000, `Navigating to href: ${href}`);
-  const rows = await page.$$('.vehicleTable tbody tr');
-  const parts = [];
-  for (const row of rows) {
-    try {
-      // Only add rows that have a part number link
-      const partNumber = await row.$eval('.partNumber a', el => el && el.innerText.trim());
-      if (!PART_NUMBER_REGEX.test(partNumber)) { continue; };
-
-      const description = await row.$eval('.description', el => el.innerText.trim());
-      // Ignore MSRP
-      const price = await row.$eval('.price', el => el.innerText.trim().split(/\s+/)[0]);
-      const availability = await row.$eval('.availability', element => element.innerText.trim());
-      const ships = await row.$eval('.ships', element => element.innerText.trim());
-
-      parts.push({
-        PartNumber: partNumber,
-        Description: description,
-        WebsitePrice1_CanAm: price,
-        Availability: availability,
-        Ships: ships
-      })
-    } catch (error) {
-      continue; // Skip this row and continue with the next one
-    }
-  }
-  return parts;
 };
