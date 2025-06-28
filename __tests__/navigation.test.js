@@ -2,8 +2,6 @@ import { jest } from '@jest/globals';
 // __tests__/scraper-utils.test.js
 import { JSDOM } from 'jsdom';
 import {
-  withRetry,
-  getYearRange,
   getPartsFromVehicleHref,
   getBodyStyleHrefsForModel,
   getModelHrefsForMake,
@@ -12,13 +10,17 @@ import {
 } from '../navigation';
 
 jest.useFakeTimers();
-jest.spyOn(console, 'log').mockImplementation(() => { });
 jest.spyOn(console, 'warn').mockImplementation(() => { });
 jest.spyOn(global, 'setTimeout').mockImplementation((fn) => fn());
 
 const mockGoto = jest.fn();
 const mockEvaluate = jest.fn();
-const mockQuerySelectorAll = jest.fn();
+// const mockEvaluate = async fn => html => {
+//   const dom = new JSDOM(html, { runScripts: "dangerously" });
+//   global.window = dom.window
+//   global.document = dom.window.document
+//   fn();
+// };
 const mockPage = {
   goto: mockGoto,
   evaluate: mockEvaluate,
@@ -26,33 +28,19 @@ const mockPage = {
   $$: jest.fn()
 };
 
-describe('withRetry', () => {
-  it('resolves on first try', async () => {
-    const fn = jest.fn().mockResolvedValue('success');
-    await expect(withRetry(fn)).resolves.toBe('success');
-    expect(fn).toHaveBeenCalledTimes(1);
-  });
+const documentOg = global.document;
+const windowOg = global.window;
 
-  it('retries up to limit and succeeds', async () => {
-    const fn = jest.fn()
-      .mockRejectedValueOnce(new Error('fail'))
-      .mockResolvedValueOnce('success');
-    await expect(withRetry(fn, 3)).resolves.toBe('success');
-    expect(fn).toHaveBeenCalledTimes(2);
-  });
+const mockDom = async html => {
+  const dom = new JSDOM(html);
+  global.window = dom.window
+  global.document = dom.window.document
+  return Promise.resolve(dom);
+};
 
-  it('fails after all retries', async () => {
-    const fn = jest.fn().mockRejectedValue(new Error('fail'));
-    await expect(withRetry(fn, 3)).rejects.toThrow('fail');
-    expect(fn).toHaveBeenCalledTimes(3);
-    expect(console.warn).toHaveBeenCalled();
-  });
-});
-
-describe('getYearRange', () => {
-  it('returns correct range', () => {
-    expect(getYearRange(2000, 2002)).toEqual([2000, 2001, 2002]);
-  });
+afterEach(() => {
+  global.window = documentOg;
+  global.document = windowOg;
 });
 
 describe.only('getBodyStyleHrefsForModel', () => {
@@ -61,16 +49,27 @@ describe.only('getBodyStyleHrefsForModel', () => {
       <a class="list-group-item nagsPill" href="/car1">Car One</a>
       <a class="list-group-item nagsPill" href="/car2">Car Two</a>
     </div>`;
-  const dom = new JSDOM(html);
-
   it('parses hrefs correctly', async () => {
-    mockEvaluate.mockImplementation(fn => fn.call(dom.window));
+    mockEvaluate.mockImplementation(async fn => {
+      const dom = new JSDOM(html);
+      global.window = dom.window
+      global.document = dom.window.document
+
+      console.log('TEST dom.documentElement.innerHTML: ', dom.window.document.documentElement.innerHTML);
+      console.log('TEST global.document.documentElement.innerHTML: ', global.document.documentElement.innerHTML);
+      console.log('TEST document.documentElement.innerHTML: ', document.documentElement.innerHTML);
+      console.log('TEST window.document.documentElement.innerHTML: ', window.document.documentElement.innerHTML);
+
+      return await fn();
+    });
+
     const result = await getBodyStyleHrefsForModel(mockPage);
     expect(result).toEqual({
       'Car One': { href: '/car1' },
       'Car Two': { href: '/car2' }
     });
   });
+
 });
 
 describe('getModelHrefsForMake', () => {

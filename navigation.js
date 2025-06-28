@@ -1,21 +1,7 @@
-export const withRetry = async (fn, retries = 3, delay = 1000, label = '') => {
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await fn();
-    } catch (e) {
-      console.warn(`Attempt ${i + 1} failed for ${label || 'task'}: ${e.message}`);
-      if (i === retries - 1) throw e;
-      await new Promise(res => setTimeout(res, delay * (i + 1)));
-    }
-  }
-};
+import { withRetry, getCurrentYear } from './utils';
+import { YEAR_1, CANAM_BASE_URL, PART_NUMBER_REGEX } from './constants';
 
-export const getYearRange = (start = YEAR_1, end = CURRENT_YEAR) => [...Array(end - start + 1).keys()].map(i => i + start);
-
-const YEAR_1 = 2000;
-const CURRENT_YEAR = new Date().getFullYear();
-const CANAM_BASE_URL = 'https://www.canamautoglass.ca/nags/';
-const PART_NUMBER_REGEX = /^(FW|DW)/;
+const CURRENT_YEAR = getCurrentYear();
 
 export const getPartsFromVehicleHref = async (page, href) => {
   await withRetry(() => page.goto(href), 3, 1000, `Navigating to href: ${href}`);
@@ -48,11 +34,20 @@ export const getPartsFromVehicleHref = async (page, href) => {
 };
 
 export const getBodyStyleHrefsForModel = async page => {
+  // debugger;
+  console.log('CODE document.documentElement.innerHTML: ', document.documentElement.innerHTML);
   try {
-    return await page.evaluate(() =>
-      Array.from(document.querySelectorAll('.list-group-item.nagsPill'))
+    return await page.evaluate(() => {
+      console.log('CODE EVALUATE document.documentElement.innerHTML: ', document.documentElement.innerHTML);
+      const bodyStyles = Array.from(document.querySelectorAll('.list-group-item.nagsPill'))
         .reduce((acc, el) => ({ ...acc, [el.innerText.trim()]: { href: el.href } }), {})
-    );
+      console.log('CODE EVALUATE bodyStyles', bodyStyles)
+      return bodyStyles;
+    });
+    // return await page.evaluate(() =>
+    //   Array.from(document.querySelectorAll('.list-group-item.nagsPill'))
+    //     .reduce((acc, el) => ({ ...acc, [el.innerText.trim()]: { href: el.href } }), {})
+    // );
   } catch (e) {
     console.log("Error processing bodyStyles", e.message)
     throw e;

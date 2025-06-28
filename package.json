@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node index.js",
     "lint": "eslint",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./config/jest.config.js"
+    "test": "node --no-warnings=ExperimentalWarning --experimental-vm-modules node_modules/jest/bin/jest.js --config ./config/jest.config.js",
+    "test2": "node --inspect-brk --experimental-vm-modules node_modules/jest/bin/jest.js --config ./config/jest.config.js"
   },
   "dependencies": {
     "puppeteer": "^21.0.0"

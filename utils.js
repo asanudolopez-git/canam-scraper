@@ -1,5 +1,4 @@
-
-import { YEAR_1, CURRENT_YEAR } from "./constants.js";
+import { YEAR_1 } from "./constants.js";
 
 export const withRetry = async (fn, retries = 3, delay = 1000, label = '') => {
   for (let i = 0; i < retries; i++) {
@@ -13,4 +12,5 @@ export const withRetry = async (fn, retries = 3, delay = 1000, label = '') => {
   }
 };
 
-export const getYearRange = (start = YEAR_1, end = CURRENT_YEAR) => [...Array(end - start + 1).keys()].map(i => i + start);
+export const getCurrentYear = () => new Date().getFullYear();
+export const getYearRange = (start = YEAR_1, end = getCurrentYear()) => [...Array(end - start + 1).keys()].map(i => i + start);
