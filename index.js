@@ -1,10 +1,10 @@
 import dotenv from 'dotenv';
 import fs from 'fs';
-dotenv.config();
 import withLogin from './withLogin.js';
 import config from './config/output.config.js';
 import { getPartsFromVehicleHref } from './navigation.js';
 import { getYearRange } from './utils.js';
+dotenv.config();
 
 const scrapeParts = async () => {
   withLogin(async page => {
