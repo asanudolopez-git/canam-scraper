@@ -1,4 +1,4 @@
-import { withRetry, getCurrentYear } from './utils';
+import { withRetry, getCurrentYear, constructPart } from './utils';
 import { YEAR_1, CANAM_BASE_URL, PART_NUMBER_REGEX } from './constants';
 
 const CURRENT_YEAR = getCurrentYear();
@@ -18,14 +18,14 @@ export const getPartsFromVehicleHref = async (page, href) => {
       const price = await row.$eval('.price', el => el.innerText.trim().split(/\s+/)[0]);
       const availability = await row.$eval('.availability', element => element.innerText.trim());
       const ships = await row.$eval('.ships', element => element.innerText.trim());
-
-      parts.push({
+      const part = constructPart({
         PartNumber: partNumber,
         Description: description,
         WebsitePrice1_CanAm: price,
         Availability: availability,
         Ships: ships
       })
+      parts.push(part);
     } catch (error) {
       continue; // Skip this row and continue with the next one
     }

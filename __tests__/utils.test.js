@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { withRetry, getYearRange } from '../utils';
+import { withRetry, getYearRange, constructPart } from '../utils';
 
 jest.useFakeTimers();
 jest.spyOn(console, 'warn').mockImplementation(() => { });
@@ -31,5 +31,36 @@ describe('withRetry', () => {
 describe('getYearRange', () => {
   it('returns correct range', () => {
     expect(getYearRange(2000, 2002)).toEqual([2000, 2001, 2002]);
+  });
+});
+
+describe('constructPart', () => {
+  it('sets matching feature flags to 0 and others to 1, and cleans price', () => {
+    const input = {
+      Description: '(Solar) Acoustic Heated Forward Collision Lane Rain',
+      WebsitePrice1_CanAm: '$123.45',
+      RainSensor: 0,
+      LaneDeparture: 0,
+      Acoustic: 0,
+      HeatedWiperPark: 0,
+      CondensationSensor: 0,
+      HeatedWindshield: 0,
+      HeadsupDispplay: 0,
+      ForwardCollisionAlert: 0,
+      HumiditySensor: 0
+    };
+
+    const output = constructPart(input);
+
+    expect(output.RainSensor).toBe(0);
+    expect(output.LaneDeparture).toBe(0);
+    expect(output.Acoustic).toBe(0);
+    expect(output.HeatedWindshield).toBe(0);
+    expect(output.ForwardCollisionAlert).toBe(0);
+    expect(output.CondensationSensor).toBe(1);
+    expect(output.HeatedWiperPark).toBe(1);
+    expect(output.HeadsupDispplay).toBe(1);
+    expect(output.HumiditySensor).toBe(1);
+    expect(output.WebsitePrice1_CanAm).toBe('123.45');
   });
 });
