@@ -20,7 +20,6 @@ const scrapeParts = async () => {
         const { ModelHref: modelHref, BodyHref: bodyHref } = vehicleByYear;
         const vehicleId = bodyHref || modelHref;
         const vehicleParts = partsByVehicle[vehicleId] || [];
-        // Tmp: Indicates it has already been scraped. Include boolean here for optional updates
         if (partsByVehicle[vehicleId]) {
           console.log(`${vehicleId} has already been scraped, skipping...`)
           continue;
