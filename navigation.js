@@ -1,5 +1,5 @@
-import { withRetry, getCurrentYear, constructPart } from './utils';
-import { YEAR_1, CANAM_BASE_URL, PART_NUMBER_REGEX } from './constants';
+import { withRetry, getCurrentYear, constructPart } from './utils.js';
+import { YEAR_1, CANAM_BASE_URL, PART_NUMBER_REGEX } from './constants.js';
 
 const CURRENT_YEAR = getCurrentYear();
 
