@@ -21,5 +21,12 @@ export const constructPart = part => {
   return part;
 }
 
+export const countParts = partsByVehicle => {
+  let partsCount = 0;
+  for (const parts of Object.values(partsByVehicle)) {
+    partsCount += parts.length;
+  }
+  return partsCount;
+}
 export const getCurrentYear = () => new Date().getFullYear();
 export const getYearRange = (start = YEAR_1, end = getCurrentYear()) => [...Array(end - start + 1).keys()].map(i => i + start);
