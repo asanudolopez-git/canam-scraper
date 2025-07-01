@@ -1,11 +1,12 @@
 import dotenv from 'dotenv';
 import fs from 'fs';
+import csv from 'csv-parser';
 import { Parser } from 'json2csv';
 import withLogin from './withLogin.js';
 import config from './config/output.config.js';
 import { PARTS_TEMPLATE } from './constants.js'
 import { getPartsFromVehicleHref } from './navigation.js';
-import { getYearRange, flatten, sanitizeParts } from './utils.js';
+import { getYearRange, flatten, sanitizeParts, constructId } from './utils.js';
 dotenv.config();
 
 export const scrapeParts = async () => {
@@ -44,6 +45,7 @@ export const scrapeParts = async () => {
     console.log(`Parts scraped and saved to ${config.partsByVehicleFilename}`);
   });
 }
+
 export const partsToCsv = () => {
   let parts = JSON.parse(fs.readFileSync(config.partsByVehicleFlattenedFilename, 'utf8'));
   if (!parts.length) {
@@ -63,4 +65,52 @@ export const partsToCsv = () => {
   fs.writeFileSync(config.CanAmPartsFilename, csv, 'utf8');
 };
 
-partsToCsv();
+export const makeIdentifiersFromCSV = inputPath => {
+  // SELECT 
+  // COALESCE("BodyHref", "ModelHref") || '--' || "PartNumber" AS constructed_id
+  // FROM public.canam_parts;
+
+  // const inputPath = './tmp/data-1751401275123.csv';  // Your CSV file
+  const outputPath = config.identifiersDbFilename;
+  const ids = [];
+
+  fs.createReadStream(inputPath)
+    .pipe(csv())
+    .on('data', (row) => {
+      if (row.constructed_id) {
+        ids.push(row.constructed_id.trim());
+      }
+    })
+    .on('end', () => {
+      fs.writeFileSync(outputPath, JSON.stringify(ids, null, 2), 'utf-8');
+      console.log(`✅ Written ${ids.length} IDs to ${outputPath}`);
+    });
+}
+
+export const makeIdentifiersFromPartsByVehicleFlattened = () => {
+  const parts = JSON.parse(fs.readFileSync(config.partsByVehicleFlattenedFilename, 'utf8')).map(constructId);
+  fs.writeFileSync('tmp/identifiers.csv', partsCsv, JSON.stringify(parts, null, 2));
+};
+
+export const compareIdentifiers = () => {
+  const dbIds = JSON.parse(fs.readFileSync('./tmp/databaseIdentifiers.json', 'utf8'));
+  const ids = JSON.parse(fs.readFileSync('tmp/identifiers.json', 'utf8'));
+  // 1. Count duplicates in `ids`
+  const dbSet = new Set(dbIds);
+  const idsSet = new Set(ids);
+  const duplicates = new Set();
+  for (const id of ids) {
+    if (dbSet.has(id)) { duplicates.add(id) }
+  }
+  // 2. IDs in `ids` but not in `dbIds`
+  const notInDb = ids.filter(id => !dbSet.has(id));
+  // 3. dbIds not found in ids
+  const notInIds = dbIds.filter(id => !idsSet.has(id));
+  // 🔍 Output
+  console.log(`✅ IDs in DB: ${duplicates.size}`);
+  console.log(`✅ IDs not in DB: ${notInDb.length}`);
+  console.log(`❌ IDs in DB not found in ids: ${notInIds.length}`);
+}
+// partsToCsv();
+// makeIdentifiers();
+compareIdentifiers();

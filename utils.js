@@ -37,3 +37,5 @@ export const sanitizeParts = parts => parts.map(part => {
     ...part
   };
 });
+
+export const constructId = ({ ModelHref: modelHref, BodyHref: bodyHref, PartNumber: partNumber }) => `${bodyHref || modelHref}--${partNumber}`;

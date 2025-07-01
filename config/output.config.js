@@ -4,6 +4,8 @@ const config = {
   vehiclesByYearFilename: 'fixtures/vehiclesByYear.json',
   partsByVehicleFilename: 'tmp/partsByVehicle.json',
   partsByVehicleFlattenedFilename: 'tmp/partsByVehicleFlattened.json',
+  identifiersDbFilename: 'tmp/identifiersDb.json',
+  identifiersFilename: 'tmp/identifiers.json',
   CanAmPartsFilename: 'tmp/CanAmParts.csv'
 };
 
