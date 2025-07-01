@@ -1,9 +1,9 @@
 import fs from 'fs';
 import csv from 'csv-parser';
 import { Parser } from 'json2csv';
-import config from './config/output.config'
-import { PARTS_TEMPLATE } from './constants';
-import { flatten, sanitizeParts, constructId } from './utils';
+import config from './config/output.config.js'
+import { PARTS_TEMPLATE } from './constants.js';
+import { flatten, sanitizeParts, constructId } from './utils.js';
 
 export const flattenPartsByVehicle = () => {
   const partsByVehicle = JSON.parse(fs.readFileSync(config.partsByVehicleFilename, 'utf8')) || {};
@@ -55,9 +55,9 @@ export const compareIdentifiers = () => {
   // 1. Count duplicates in `ids`
   const dbSet = new Set(dbIds);
   const idsSet = new Set(ids);
-  const duplicates = new Set();
+  const duplicates = [];
   for (const id of ids) {
-    if (dbSet.has(id)) { duplicates.add(id) }
+    if (dbSet.has(id)) { duplicates.push(id) }
   }
   // 2. IDs in `ids` but not in `dbIds`
   const notInDb = ids.filter(id => !dbSet.has(id));
@@ -70,7 +70,7 @@ export const compareIdentifiers = () => {
   ];
 
   // Parts that have to be updated
-  console.log(`✅ IDs in DB: ${duplicates.size}`);
+  console.log(`✅ IDs in DB: ${duplicates.length}`);
   // Parts that have to be created
   console.log(`✅ IDs not in DB: ${notInDb.length}`);
 
@@ -91,4 +91,24 @@ export const compareIdentifiers = () => {
     partsToUpdate,
     partsToCreate
   }
+}
+
+export const makePartsForCSV = () => {
+  const { partsToUpdate, partsToCreate } = compareIdentifiers();
+  const partsByVehicle = JSON.parse(fs.readFileSync(config.partsByVehicleFilename, 'utf8'));
+
+
+  const createParts = [];
+  partsToCreate.forEach(({ href, partNumber }) => {
+    const part = partsByVehicle[href].find(p => p.PartNumber === partNumber)
+    if (part) { createParts.push(part) }
+  });
+  partsToCsv(createParts, config.partsToCreateFilename);
+
+  const updateParts = [];
+  partsToUpdate.forEach(({ href, partNumber }) => {
+    const part = partsByVehicle[href].find(p => p.PartNumber === partNumber)
+    if (part) { updateParts.push(part) }
+  });
+  partsToCsv(updateParts, config.partsToUpdateFilename);
 }

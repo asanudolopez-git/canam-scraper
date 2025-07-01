@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import withLogin from './withLogin.js';
 import config from './config/output.config.js';
+import { makePartsForCSV } from './output.js';
 import { getPartsFromVehicleHref } from './navigation.js';
 import { getYearRange } from './utils.js';
 dotenv.config();
@@ -42,3 +43,5 @@ export const scrapeParts = async () => {
     console.log(`Parts scraped and saved to ${config.partsByVehicleFilename}`);
   });
 }
+
+makePartsForCSV();
