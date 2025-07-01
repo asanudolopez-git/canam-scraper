@@ -93,8 +93,8 @@ export const makeIdentifiersFromPartsByVehicleFlattened = () => {
 };
 
 export const compareIdentifiers = () => {
-  const dbIds = JSON.parse(fs.readFileSync('./tmp/databaseIdentifiers.json', 'utf8'));
-  const ids = JSON.parse(fs.readFileSync('tmp/identifiers.json', 'utf8'));
+  const dbIds = JSON.parse(fs.readFileSync(config.identifiersDbFilename, 'utf8'));
+  const ids = JSON.parse(fs.readFileSync(config.identifiersFilename, 'utf8'));
   // 1. Count duplicates in `ids`
   const dbSet = new Set(dbIds);
   const idsSet = new Set(ids);
@@ -106,10 +106,15 @@ export const compareIdentifiers = () => {
   const notInDb = ids.filter(id => !dbSet.has(id));
   // 3. dbIds not found in ids
   const notInIds = dbIds.filter(id => !idsSet.has(id));
+  const notInIdsSample = [
+    notInIds[Math.floor(Math.random() * notInIds.length)],
+    notInIds[Math.floor(Math.random() * notInIds.length)],
+    notInIds[Math.floor(Math.random() * notInIds.length)]
+  ];
   // 🔍 Output
   console.log(`✅ IDs in DB: ${duplicates.size}`);
   console.log(`✅ IDs not in DB: ${notInDb.length}`);
-  console.log(`❌ IDs in DB not found in ids: ${notInIds.length}`);
+  console.log(`❌ IDs in DB not found in ids: ${notInIds.length}, examples: \n`, notInIdsSample);
 }
 // partsToCsv();
 // makeIdentifiers();
