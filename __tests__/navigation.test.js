@@ -15,12 +15,6 @@ jest.spyOn(global, 'setTimeout').mockImplementation((fn) => fn());
 
 const mockGoto = jest.fn();
 const mockEvaluate = jest.fn();
-// const mockEvaluate = async fn => html => {
-//   const dom = new JSDOM(html, { runScripts: "dangerously" });
-//   global.window = dom.window
-//   global.document = dom.window.document
-//   fn();
-// };
 const mockPage = {
   goto: mockGoto,
   evaluate: mockEvaluate,
@@ -30,13 +24,6 @@ const mockPage = {
 
 const documentOg = global.document;
 const windowOg = global.window;
-
-const mockDom = async html => {
-  const dom = new JSDOM(html);
-  global.window = dom.window
-  global.document = dom.window.document
-  return Promise.resolve(dom);
-};
 
 afterEach(() => {
   global.window = documentOg;

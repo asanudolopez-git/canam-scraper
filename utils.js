@@ -17,7 +17,7 @@ export const withRetry = async (fn, retries = 3, delay = 1000, label = '') => {
 };
 
 export const constructPart = part => {
-  const { Description: description, WebsitePrice1_CanAm: price } = part;
+  const { Description: description } = part;
   Object.entries(PART_DESCRIPTION_REGEX).forEach(([column, regex]) => {
     part[column] = regex.test(description) ? 0 : 1;
   });

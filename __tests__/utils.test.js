@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { withRetry, getYearRange, constructPart, countParts } from '../utils';
+import { withRetry, getYearRange, constructPart } from '../utils';
 
 jest.useFakeTimers();
 jest.spyOn(console, 'warn').mockImplementation(() => { });

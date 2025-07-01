@@ -26,7 +26,7 @@ export const getPartsFromVehicleHref = async (page, href) => {
         Ships: ships
       })
       parts.push(part);
-    } catch (error) {
+    } catch {
       continue; // Skip this row and continue with the next one
     }
   }
@@ -72,7 +72,7 @@ export const getModelHrefsForMake = async page => {
 
       console.log(`Found ${Object.keys(bodyStyles).length} bodyStyles for model: ${model}.`)
     } catch (e) {
-      console.log(`Error processing model: ${model}`, e.message);
+      console.log('Error processing model:', e.message);
       continue;
     }
   }
@@ -96,7 +96,7 @@ export const getMakeHrefsForYear = async page => {
       };
       console.log(`Found ${Object.keys(models).length} models for make: ${make}.`)
     } catch (e) {
-      console.log(`Error processing make: ${make}`, e.message);
+      console.log('Error processing make:', e.message);
       continue;
     }
   }

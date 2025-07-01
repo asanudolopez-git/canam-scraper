@@ -6,7 +6,7 @@ export const config = {
   },
   setupFiles: ['./setup.jest.js'],
   transform: {
-    '^.+.test\.js$': [
+    '^.+.test.js$': [
       'babel-jest',
     ],
   },
