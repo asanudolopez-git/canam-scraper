@@ -1,12 +1,14 @@
 import dotenv from 'dotenv';
 import fs from 'fs';
+import { Parser } from 'json2csv';
 import withLogin from './withLogin.js';
 import config from './config/output.config.js';
+import { PARTS_TEMPLATE } from './constants.js'
 import { getPartsFromVehicleHref } from './navigation.js';
-import { getYearRange, countParts } from './utils.js';
+import { getYearRange, flatten, sanitizeParts } from './utils.js';
 dotenv.config();
 
-const scrapeParts = async () => {
+export const scrapeParts = async () => {
   withLogin(async page => {
     const years = getYearRange(2000, 2025); // For testing, you can set this to a specific year or range
 
@@ -42,6 +44,23 @@ const scrapeParts = async () => {
     console.log(`Parts scraped and saved to ${config.partsByVehicleFilename}`);
   });
 }
+export const partsToCsv = () => {
+  let parts = JSON.parse(fs.readFileSync(config.partsByVehicleFlattenedFilename, 'utf8'));
+  if (!parts.length) {
+    const partsByVehicle = JSON.parse(fs.readFileSync(config.partsByVehicleFilename, 'utf8'));
+    parts = flatten(Object.values(partsByVehicle), sanitizeParts);
+    fs.writeFileSync(config.partsByVehicleFlattenedFilename, JSON.stringify(parts, null, 2));
+  }
+  console.log(`Found ${parts.length} parts`);
 
-scrapeParts();
-// countParts();
+  const parser = new Parser({
+    fields: Object.keys(PARTS_TEMPLATE),
+    defaultValue: '',
+    quote: '"',
+    delimiter: ','
+  });
+  const csv = parser.parse(parts);
+  fs.writeFileSync(config.CanAmPartsFilename, csv, 'utf8');
+};
+
+partsToCsv();

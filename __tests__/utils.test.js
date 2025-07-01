@@ -64,20 +64,3 @@ describe('constructPart', () => {
     expect(output.WebsitePrice1_CanAm).toBe('123.45');
   });
 });
-
-describe('countParts', () => {
-  it('returns 0 for empty input', () => {
-    const partsByVehicle = {};
-    expect(countParts(partsByVehicle)).toBe(0);
-  });
-
-  it('counts total parts across all vehicles', () => {
-    const partsByVehicle = {
-      '2023-Honda-Civic': [{}, {}, {}],
-      '2024-Toyota-Corolla': [{}],
-      '2025-Ford-Focus': [{}, {}]
-    };
-
-    expect(countParts(partsByVehicle)).toBe(6);
-  });
-});

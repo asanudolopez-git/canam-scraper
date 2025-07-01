@@ -14,7 +14,7 @@ const populateVehicleHrefs = async (existingHrefs = {}) => {
 
 const populateVehiclesByYear = hrefs => {
   const vehiclesByYear = {};
-  Object.entries(hrefs).forEach(([year, { yearHref, makes }]) => {
+  Object.entries(hrefs).forEach(([year, { href: yearHref, makes }]) => {
     const parts = [];
     Object.entries(makes).forEach(([make, { href: makeHref, models }]) => {
       Object.entries(models).forEach(([model, { href: modelHref, bodyStyles }]) => {

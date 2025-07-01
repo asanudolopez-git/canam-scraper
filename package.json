@@ -9,6 +9,7 @@
     "test2": "node --inspect-brk --experimental-vm-modules node_modules/jest/bin/jest.js --config ./config/jest.config.js"
   },
   "dependencies": {
+    "json2csv": "^6.0.0-alpha.2",
     "puppeteer": "^21.0.0"
   },
   "devDependencies": {

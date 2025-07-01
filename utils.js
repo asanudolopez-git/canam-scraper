@@ -1,5 +1,9 @@
 import { YEAR_1, PART_DESCRIPTION_REGEX } from "./constants.js";
 
+export const flatten = (arrs, callback) => arrs.reduce((acc, parts) => [...acc, ...callback(parts)], []);
+export const getCurrentYear = () => new Date().getFullYear();
+export const getYearRange = (start = YEAR_1, end = getCurrentYear()) => [...Array(end - start + 1).keys()].map(i => i + start);
+
 export const withRetry = async (fn, retries = 3, delay = 1000, label = '') => {
   for (let i = 0; i < retries; i++) {
     try {
@@ -17,16 +21,19 @@ export const constructPart = part => {
   Object.entries(PART_DESCRIPTION_REGEX).forEach(([column, regex]) => {
     part[column] = regex.test(description) ? 0 : 1;
   });
-  part['WebsitePrice1_CanAm'] = price.replace('$', '')
   return part;
 }
 
-export const countParts = partsByVehicle => {
-  let partsCount = 0;
-  for (const parts of Object.values(partsByVehicle)) {
-    partsCount += parts.length;
-  }
-  return partsCount;
-}
-export const getCurrentYear = () => new Date().getFullYear();
-export const getYearRange = (start = YEAR_1, end = getCurrentYear()) => [...Array(end - start + 1).keys()].map(i => i + start);
+export const sanitizeParts = parts => parts.map(part => {
+  delete part.Id;
+  part['WebsitePrice1_CanAm'] = `$${parseFloat(part['WebsitePrice1_CanAm'].replace('$', '')).toFixed(2)}`;
+  part.ShopPartPrice1_CanAm = null;
+  part.ShopPriceList2_VanFax = null;
+  part.ShopPriceList3_Benson = null;
+  part.ShopPriceList4_PGW = null;
+  return {
+    Year: part.Year,
+    YearHref: part['MakeHref'].match(/.*nags\/\d+\//)[0],
+    ...part
+  };
+});

@@ -13,7 +13,6 @@ export const PART_DESCRIPTION_REGEX = {
   HumiditySensor: new RegExp('Humidity', 'i')
 };
 export const PARTS_TEMPLATE = {
-  Id: 'nextval(\'"PartPriceDetail_Id_seq"\'::regclass)',
   Year: '',
   YearHref: '',
   Make: '',
@@ -27,7 +26,7 @@ export const PARTS_TEMPLATE = {
   WebsitePrice1_CanAm: '',
   Availability: '',
   Ships: '',
-  ShopPartPrice1_CanAm: 0.00,
+  ShopPartPrice1_CanAm: null,
   ShopPartPriceOveride: 0,
   RainSensor: 0,
   LaneDeparture: 0,
@@ -40,7 +39,7 @@ export const PARTS_TEMPLATE = {
   ForwardCollisionAlert: 0,
   Logo: 0,
   HumiditySensor: 0,
-  ShopPriceList2_VanFax: 0.00,
-  ShopPriceList3_Benson: 0.00,
-  ShopPriceList4_PGW: 0.00,
+  ShopPriceList2_VanFax: null,
+  ShopPriceList3_Benson: null,
+  ShopPriceList4_PGW: null,
 };
