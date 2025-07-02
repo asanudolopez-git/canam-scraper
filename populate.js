@@ -1,9 +1,9 @@
 import { getHrefsForYears } from "./navigation.js";
-import withLogin from "./withLogin.js";
 import fs from "fs";
 import config from "./config/output.config.js";
-import { getCurrentYear } from './utils.js';
+import { getCurrentYear, withLogin } from './utils.js';
 import { PARTS_TEMPLATE } from "./constants.js";
+dotenv.config();
 
 const populateVehicleHrefs = async (existingHrefs = {}, yearRange) => {
   withLogin(async page => {

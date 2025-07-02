@@ -3,7 +3,7 @@ import csv from 'csv-parser';
 import { Parser } from 'json2csv';
 import config from './config/output.config.js'
 import { PARTS_TEMPLATE } from './constants.js';
-import { flatten, sanitizeParts, constructId } from './utils.js';
+import { constructId } from './utils.js';
 
 export const partsToCsv = (parts = flattenPartsByVehicle(), fileName) => {
   const parser = new Parser({
