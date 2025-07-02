@@ -5,32 +5,12 @@
 4. [Import](#import)
 ## Clean{#clean} 
 [*Back to Top*](#home)
-### Delete Duplicates
-Delete Duplicate parts while keeping the latest row.
-```
-DELETE FROM public.canam_parts a
-USING public.canam_parts b
-WHERE a.ctid < b.ctid
-  AND a."Year" = b."Year"
-  AND a."Make" = b."Make"
-  AND a."Model" = b."Model"
-  AND a."Body" IS NOT DISTINCT FROM b."Body"
-  AND a."PartNumber" = b."PartNumber";
-```
-### Normalize
-Trim and normalize keys ensuring no stray spaces or case mismatches cause false negatives during joins.
 
-```
-UPDATE public.canam_parts
-SET
-  "Make" = TRIM("Make"),
-  "Model" = TRIM("Model"),
-  "Body" = TRIM("Body"),
-  "PartNumber" = TRIM("PartNumber");
-```
+`npm run clean`
+
+Delete Duplicate parts while keeping the latest row, and normalize keys ensuring no stray spaces or case mismatches cause false negatives during joins.
 ## Populate{#populate}
 [*Back to Top*](#home)
-### Populate Vehicle Links to be scraped
 
 `npm run populate`
 
@@ -97,7 +77,7 @@ And also `fixtures/vehiclesByYear.json` with e.g:
 ## Scrape{#scrape}
 [*Back to Top*](#home)
 
-`npm start`
+`npm run scrape`
 
 This will populate `tmp/partsByVehicle.json` with e.g:
 ```
@@ -175,6 +155,9 @@ And also `fixtures/parts.json` with e.g:
 ```
 ## Import{#import} 
 [*Back to Top*](#home)
+
+`npm run import`
+
 Download identifiers for all rows to a csv in order to compare what we have scraped.
 ```
 SELECT 
@@ -186,7 +169,7 @@ Save this to `tmp/productionIds.csv`
 ## Export {#export}
 [*Back to Top*](#home)
 
-`npm run partsCsv`
+`npm run export`
 
 This will generate CSV's: `partsToCreate.csv` and `partsToUpdate.csv`
 

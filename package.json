@@ -4,15 +4,19 @@
   "version": "1.0.0",
   "scripts": {
     "start": "node index.js",
+    "clean": "node clean.js",
+    "populate": "node populate.js",
     "scrape": "node scrape.js",
+    "import": "node import.js",
     "lint": "eslint -c config/eslint.config.js",
     "test": "node --no-warnings=ExperimentalWarning --experimental-vm-modules node_modules/jest/bin/jest.js --config ./config/jest.config.js",
-    "export": "node export.js",
-    "populate": "node populate.js"
+    "export": "node export.js"
   },
   "dependencies": {
     "csv-parser": "^3.2.0",
+    "csv-writer": "^1.6.0",
     "json2csv": "^6.0.0-alpha.2",
+    "pg": "^8.16.3",
     "puppeteer": "^21.0.0"
   },
   "devDependencies": {

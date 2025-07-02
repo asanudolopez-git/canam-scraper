@@ -41,8 +41,7 @@ export const generateOutputSets = async productionCsvFilename => {
 }
 
 export const generateCsv = async () => {
-  const productionCsvFilename = process.argv[2];
-  let { partsToUpdate, partsToCreate } = await generateOutputSets(productionCsvFilename);
+  let { partsToUpdate, partsToCreate } = await generateOutputSets(config.productionIdentifiersFilename);
   const partsByVehicle = JSON.parse(fs.readFileSync(config.partsByVehicleFilename, 'utf8'));
 
   partsToUpdate = partsToUpdate.map(({ href, partNumber }) =>
