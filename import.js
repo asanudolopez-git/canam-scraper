@@ -41,3 +41,5 @@ const importConstructedIds = async () => {
 };
 
 importConstructedIds();
+
+export default importConstructedIds;

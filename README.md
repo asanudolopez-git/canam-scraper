@@ -2,7 +2,8 @@
 1. [Clean](#clean)
 2. [Populate](#populate)
 3. [Scrape](#scrape)
-4. [Import](#import)
+4. [Import Identifiers](#import)
+5. [Export](#export)
 ## Clean{#clean} 
 [*Back to Top*](#home)
 
@@ -153,10 +154,10 @@ And also `fixtures/parts.json` with e.g:
   }
 ]
 ```
-## Import{#import} 
+## Import Identifiers {#import} 
 [*Back to Top*](#home)
 
-`npm run import`
+`npm run importIdentifiers`
 
 Download identifiers for all rows to a csv in order to compare what we have scraped.
 ```
@@ -173,4 +174,5 @@ Save this to `tmp/productionIds.csv`
 
 This will generate CSV's: `partsToCreate.csv` and `partsToUpdate.csv`
 
-## Upload
+## Upload {#upload}
+[*Back to Top*](#home)

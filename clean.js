@@ -52,5 +52,6 @@ const deleteAndClean = async (tableName = "DG_PartPriceDetail") => {
     await client.end();
   }
 };
+export default deleteAndClean;
 
 deleteAndClean();

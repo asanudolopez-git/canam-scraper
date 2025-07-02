@@ -40,7 +40,7 @@ export const generateOutputSets = async productionCsvFilename => {
   };
 }
 
-export const generateCsv = async () => {
+export const exportCsv = async () => {
   let { partsToUpdate, partsToCreate } = await generateOutputSets(config.productionIdentifiersFilename);
   const partsByVehicle = JSON.parse(fs.readFileSync(config.partsByVehicleFilename, 'utf8'));
 
@@ -59,4 +59,6 @@ export const generateCsv = async () => {
   partsToCsv(partsToCreate, config.partsToCreateFilename);
 }
 
-generateCsv();
+exportCsv();
+
+export default exportCsv;

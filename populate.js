@@ -55,8 +55,6 @@ const populate = async () => {
   console.log(`Hrefs populated in ${config.hrefsFileName}`);
   console.log(`Vehicle Templates populated in ${config.vehiclesByYearFilename}`);
 }
-populate()
-  .catch(err => {
-    console.error('Error in populate:', err);
-    process.exit(1);
-  })
+populate();
+
+export default populate;

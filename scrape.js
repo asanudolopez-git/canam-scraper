@@ -52,5 +52,6 @@ const scrape = async () => {
   const partsByVehicle = await scrapeParts({ start: getCurrentYear() });
   flattenPartsByVehicle(partsByVehicle);
 };
+export default scrape;
 
 scrape();
