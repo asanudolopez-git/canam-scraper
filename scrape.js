@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
 import fs from 'fs';
 import config from './config/output.config.js';
-import { getPartsFromVehicleHref } from './navigation.js';
-import { withLogin, flatten, sanitizeParts, getYearRange, getCurrentYear } from './utils.js';
+import { getPartsFromVehicleHref } from './lib/navigation.js';
+import { withLogin, flatten, sanitizeParts, getYearRange, getCurrentYear } from './lib/utils.js';
 dotenv.config();
 
 export const scrapeParts = async ({ start = YEAR_1, end = CURRENT_YEAR }) => {

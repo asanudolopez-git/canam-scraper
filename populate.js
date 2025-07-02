@@ -1,8 +1,8 @@
-import { getHrefsForYears } from "./navigation.js";
+import { getHrefsForYears } from "./lib/navigation.js";
 import fs from "fs";
 import config from "./config/output.config.js";
-import { getCurrentYear, withLogin } from './utils.js';
-import { PARTS_TEMPLATE } from "./constants.js";
+import { getCurrentYear, withLogin } from './lib/utils.js';
+import { PARTS_TEMPLATE } from "./lib/constants.js";
 dotenv.config();
 
 const populateVehicleHrefs = async (existingHrefs = {}, yearRange) => {

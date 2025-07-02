@@ -1,6 +1,6 @@
 import fs from 'fs';
 import config from './config/output.config.js'
-import { partsToCsv, readCsv, constructId } from './utils.js';
+import { partsToCsv, readCsv, constructId } from './lib/utils.js';
 
 export const generateOutputSets = async productionCsvFilename => {
   const localSet = new Set(
