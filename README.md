@@ -12,6 +12,7 @@
 Delete Duplicate parts while keeping the latest row, and normalize keys ensuring no stray spaces or case mismatches cause false negatives during joins.
 ## Populate
 <a name="populate"></a>
+
 `npm run populate`
 
 Populate all of the hrefs by year, make, model, and body style. These are the hrefs for every vehicle.
@@ -74,8 +75,8 @@ And also `fixtures/vehiclesByYear.json` with e.g:
   ]
 }
 ```
-## Scrap
-  e{#scrape}
+## Scrape
+<a name="scrape"></a>
 
 `npm run scrape`
 
@@ -154,18 +155,18 @@ And also `fixtures/parts.json` with e.g:
 ]
 ```
 ## Import Identifiers
-<a name="import"></a>} 
+<a name="import"></a>
 
 `npm run importIdentifiers`
 
 Download identifiers for all rows to `tmp/productionIds.csv` in order to compare what we have scraped.
 
 ## Export CSV's
-<a name="export"></a>}
+<a name="export"></a>
 
 `npm run exportCsv`
 
 This will generate CSV's: `partsToCreate.csv` and `partsToUpdate.csv`
 
 ## Upload
-<a name="upload"></a>}
+<a name="upload"></a>
