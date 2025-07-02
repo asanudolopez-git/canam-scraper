@@ -32,7 +32,7 @@ export const sanitizeParts = parts => parts.map(part => {
   part.ShopPriceList3_Benson = null;
   part.ShopPriceList4_PGW = null;
   return {
-    Year: part.Year,
+    Year: parseInt(part.Year),
     YearHref: part['MakeHref'].match(/.*nags\/\d+\//)[0],
     ...part
   };

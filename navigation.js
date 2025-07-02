@@ -34,20 +34,11 @@ export const getPartsFromVehicleHref = async (page, href) => {
 };
 
 export const getBodyStyleHrefsForModel = async page => {
-  // debugger;
-  console.log('CODE document.documentElement.innerHTML: ', document.documentElement.innerHTML);
   try {
-    return await page.evaluate(() => {
-      console.log('CODE EVALUATE document.documentElement.innerHTML: ', document.documentElement.innerHTML);
-      const bodyStyles = Array.from(document.querySelectorAll('.list-group-item.nagsPill'))
+    return await page.evaluate(() =>
+      Array.from(document.querySelectorAll('.list-group-item.nagsPill'))
         .reduce((acc, el) => ({ ...acc, [el.innerText.trim()]: { href: el.href } }), {})
-      console.log('CODE EVALUATE bodyStyles', bodyStyles)
-      return bodyStyles;
-    });
-    // return await page.evaluate(() =>
-    //   Array.from(document.querySelectorAll('.list-group-item.nagsPill'))
-    //     .reduce((acc, el) => ({ ...acc, [el.innerText.trim()]: { href: el.href } }), {})
-    // );
+    );
   } catch (e) {
     console.log("Error processing bodyStyles", e.message)
     throw e;
@@ -103,11 +94,11 @@ export const getMakeHrefsForYear = async page => {
   return makes;
 };
 
-export const getHrefsForYears = async (start = YEAR_1, end = CURRENT_YEAR, page, hrefs = {}) => {
+export const getHrefsForYears = async ({ start = YEAR_1, end = CURRENT_YEAR }, page, hrefs = {}) => {
   const years = [...Array(end - start + 1).keys()].map(i => i + start);
   console.log(`Processing years from ${start} to ${end}.`);
   for (const year of years) {
-    if (hrefs[year]) {
+    if (hrefs[year] && year !== end) {
       console.log(`${year} has already been done, skipping...`)
       continue;
     }

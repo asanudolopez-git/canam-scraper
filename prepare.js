@@ -1,12 +1,13 @@
 import { getHrefsForYears } from "./navigation.js";
 import withLogin from "./withLogin.js";
 import fs from "fs";
-import config from "./config.js";
+import config from "./config/output.config.js";
+import { getCurrentYear } from './utils.js';
 import { PARTS_TEMPLATE } from "./constants.js";
 
-const populateVehicleHrefs = async (existingHrefs = {}) => {
+const populateVehicleHrefs = async (existingHrefs = {}, yearRange) => {
   withLogin(async page => {
-    const hrefs = await getHrefsForYears(2000, 2025, page, existingHrefs);
+    const hrefs = await getHrefsForYears(yearRange, page, existingHrefs);
     fs.writeFileSync(config.hrefsFileName, JSON.stringify(hrefs, null, 2));
     populateVehiclesByYear(hrefs);
   });
@@ -21,7 +22,7 @@ const populateVehiclesByYear = hrefs => {
         if (Object.keys(bodyStyles).length) {
           Object.entries(bodyStyles).forEach(([bodyStyle, { href: bodyStyleHref }]) => {
             const part = { ...PARTS_TEMPLATE };
-            part.Year = year;
+            part.Year = parseInt(year);
             part.YearHref = yearHref;
             part.Make = make;
             part.MakeHref = makeHref;
@@ -33,7 +34,7 @@ const populateVehiclesByYear = hrefs => {
           });
         } else {
           const part = { ...PARTS_TEMPLATE };
-          part.Year = year;
+          part.Year = parseInt(year);
           part.YearHref = yearHref;
           part.Make = make;
           part.MakeHref = makeHref;
@@ -50,7 +51,7 @@ const populateVehiclesByYear = hrefs => {
 
 const prepare = async () => {
   const hrefs = JSON.parse(fs.readFileSync(config.hrefsFileName, 'utf8'));
-  await populateVehicleHrefs(hrefs);
+  await populateVehicleHrefs(hrefs, { start: getCurrentYear() });
   console.log(` populated in ${config.hrefsFileName}`);
   console.log(`Vehicle Templates populated in ${config.vehiclesByYearFilename}`);
 }
