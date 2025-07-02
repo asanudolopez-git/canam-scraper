@@ -2,17 +2,16 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import withLogin from './withLogin.js';
 import config from './config/output.config.js';
-import { makePartsForCSV } from './output.js';
 import { getPartsFromVehicleHref } from './navigation.js';
-import { getYearRange } from './utils.js';
+import { flatten, sanitizeParts, getYearRange } from './utils.js';
 dotenv.config();
 
-export const scrapeParts = async () => {
-  withLogin(async page => {
-    const years = getYearRange(2000, 2025); // For testing, you can set this to a specific year or range
+export const scrapeParts = async ({ start = YEAR_1, end = CURRENT_YEAR }) => {
+  const partsByVehicle = JSON.parse(fs.readFileSync(config.partsByVehicleFilename, 'utf8')) || {};
+  await withLogin(async page => {
+    const years = getYearRange(start, end);
 
     const vehiclesByYear = JSON.parse(fs.readFileSync(config.vehiclesByYearFilename, 'utf8'));
-    const partsByVehicle = JSON.parse(fs.readFileSync(config.partsByVehicleFilename, 'utf8')) || {};
     for (const year of years) {
       const vehicles = vehiclesByYear[year] || [];
 
@@ -42,6 +41,17 @@ export const scrapeParts = async () => {
     };
     console.log(`Parts scraped and saved to ${config.partsByVehicleFilename}`);
   });
+  return partsByVehicle;
 }
 
-makePartsForCSV();
+export const flattenPartsByVehicle = partsByVehicle => {
+  const parts = flatten(Object.values(partsByVehicle), sanitizeParts);
+  fs.writeFileSync(config.partsByVehicleFlattenedFilename, JSON.stringify(parts, null, 2));
+};
+
+const scrape = async () => {
+  const partsByVehicle = await scrapeParts();
+  flattenPartsByVehicle(partsByVehicle);
+};
+
+scrape();

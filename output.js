@@ -5,12 +5,6 @@ import config from './config/output.config.js'
 import { PARTS_TEMPLATE } from './constants.js';
 import { flatten, sanitizeParts, constructId } from './utils.js';
 
-export const flattenPartsByVehicle = () => {
-  const partsByVehicle = JSON.parse(fs.readFileSync(config.partsByVehicleFilename, 'utf8')) || {};
-  const parts = flatten(Object.values(partsByVehicle), sanitizeParts);
-  fs.writeFileSync(config.partsByVehicleFlattenedFilename, JSON.stringify(parts, null, 2));
-};
-
 export const partsToCsv = (parts = flattenPartsByVehicle(), fileName) => {
   const parser = new Parser({
     fields: Object.keys(PARTS_TEMPLATE),

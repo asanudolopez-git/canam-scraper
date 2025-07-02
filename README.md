@@ -1,14 +1,12 @@
 # CAN-AM Parts Scraper
-
-## Populate Links to be scraped
+1. [Prepare](#prepare)
+2. [Scrape](#scrape)
+## Prepare{#prepare}
+### Populate Vehicle Links to be scraped
+`npm run populate`
 
 Populate all of the hrefs by year, make, model, and body style. These are the hrefs for every vehicle.
   * Note, this should ideally only be run on the latest year, since there won't be new vehicle types before the current year.
-
-```
-const hrefs = JSON.parse(fs.readFileSync(config.hrefsFileName, 'utf8'));
-populateVehicleHrefs(hrefs, { start: getCurrentYear() }) 
-```
 
 This will populate `fixtures/hrefs.json` with e.g:
 ```
@@ -68,4 +66,111 @@ And also `fixtures/populateVehiclesByYear.json` with e.g:
 }
 ```
 
-## Populate Links to be scraped
+## Scrape{#scrape}
+`npm start`
+
+This will populate `tmp/partsByVehicle.json` with e.g:
+```
+{
+  "https://www.canamautoglass.ca/nags/2025/ACURA/11": [
+    {
+      "Year": "2025",
+      "YearHref": "https://www.canamautoglass.ca/nags/2025/",
+      "Make": "Acura",
+      "MakeHref": "https://www.canamautoglass.ca/nags/2025/ACURA",
+      "Model": "Integra",
+      "ModelHref": "https://www.canamautoglass.ca/nags/2025/ACURA/11",
+      "Body": "",
+      "BodyHref": "",
+      "PartNumber": "FW05681GTYNALT",
+      "Description": "(Solar) (Green Tint) Acoustic Infrared Interlayer Collision Mitigation Braking System Forward Collision Alert Road Departure Mitigation System LDWS Adaptive Cruise Control Lane Keep Assist Traffic Jam Assist Traffic Sign Recognition",
+      "WebsitePrice1_CanAm": "$211.70",
+      "Availability": "In Stock",
+      "Ships": "Immediately",
+      "ShopPartPrice1_CanAm": null,
+      "ShopPartPriceOveride": 0,
+      "RainSensor": 1,
+      "LaneDeparture": 0,
+      "Acoustic": 0,
+      "ElectrochromaticMirror": 0,
+      "HeatedWiperPark": 1,
+      "CondensationSensor": 1,
+      "HeatedWindshield": 1,
+      "HeadsupDispplay": 1,
+      "ForwardCollisionAlert": 0,
+      "Logo": 0,
+      "HumiditySensor": 1,
+      "ShopPriceList2_VanFax": null,
+      "ShopPriceList3_Benson": null,
+      "ShopPriceList4_PGW": null
+    },
+    {
+      "Year": "2025",
+      "YearHref": "https://www.canamautoglass.ca/nags/2025/",
+      "Make": "Acura",
+      "MakeHref": "https://www.canamautoglass.ca/nags/2025/ACURA",
+      "Model": "Integra",
+      "ModelHref": "https://www.canamautoglass.ca/nags/2025/ACURA/11",
+      "Body": "",
+      "BodyHref": "",
+      "PartNumber": "FW05681GTYN",
+      "Description": "(Solar) (Green Tint) Acoustic Infrared Interlayer Collision Mitigation Braking System Forward Collision Alert Road Departure Mitigation System LDWS Adaptive Cruise Control Lane Keep Assist Traffic Jam Assist Traffic Sign Recognition",
+      "WebsitePrice1_CanAm": "$327.89",
+      "Availability": "In Stock",
+      "Ships": "1 to 3 Days*",
+      "ShopPartPrice1_CanAm": null,
+      "ShopPartPriceOveride": 0,
+      "RainSensor": 1,
+      "LaneDeparture": 0,
+      "Acoustic": 0,
+      "ElectrochromaticMirror": 0,
+      "HeatedWiperPark": 1,
+      "CondensationSensor": 1,
+      "HeatedWindshield": 1,
+      "HeadsupDispplay": 1,
+      "ForwardCollisionAlert": 0,
+      "Logo": 0,
+      "HumiditySensor": 1,
+      "ShopPriceList2_VanFax": null,
+      "ShopPriceList3_Benson": null,
+      "ShopPriceList4_PGW": null
+    }
+  ]
+}
+```
+And also `fixtures/populateVehiclesByYear.json` with e.g:
+```
+[
+  {
+    "Year": "2025",
+    "YearHref": "https://www.canamautoglass.ca/nags/2025/",
+    "Make": "Acura",
+    "MakeHref": "https://www.canamautoglass.ca/nags/2025/ACURA",
+    "Model": "Integra",
+    "ModelHref": "https://www.canamautoglass.ca/nags/2025/ACURA/11",
+    "Body": "",
+    "BodyHref": "",
+    "PartNumber": "FW05681GTYNALT",
+    "Description": "(Solar) (Green Tint) Acoustic Infrared Interlayer Collision Mitigation Braking System Forward Collision Alert Road Departure Mitigation System LDWS Adaptive Cruise Control Lane Keep Assist Traffic Jam Assist Traffic Sign Recognition",
+    "WebsitePrice1_CanAm": "$211.70",
+    "Availability": "In Stock",
+    "Ships": "Immediately",
+    "ShopPartPrice1_CanAm": null,
+    "ShopPartPriceOveride": 0,
+    "RainSensor": 1,
+    "LaneDeparture": 0,
+    "Acoustic": 0,
+    "ElectrochromaticMirror": 0,
+    "HeatedWiperPark": 1,
+    "CondensationSensor": 1,
+    "HeatedWindshield": 1,
+    "HeadsupDispplay": 1,
+    "ForwardCollisionAlert": 0,
+    "Logo": 0,
+    "HumiditySensor": 1,
+    "ShopPriceList2_VanFax": null,
+    "ShopPriceList3_Benson": null,
+    "ShopPriceList4_PGW": null
+  }
+]
+```

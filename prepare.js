@@ -52,7 +52,7 @@ const populateVehiclesByYear = hrefs => {
 const prepare = async () => {
   const hrefs = JSON.parse(fs.readFileSync(config.hrefsFileName, 'utf8'));
   await populateVehicleHrefs(hrefs, { start: getCurrentYear() });
-  console.log(` populated in ${config.hrefsFileName}`);
+  console.log(`Hrefs populated in ${config.hrefsFileName}`);
   console.log(`Vehicle Templates populated in ${config.vehiclesByYearFilename}`);
 }
 prepare()
