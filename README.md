@@ -167,10 +167,10 @@ FROM public.canam_parts;
 ```
 Save this to `tmp/productionIds.csv`
 
-## Export {#export}
+## Export CSV's {#export}
 [*Back to Top*](#home)
 
-`npm run export`
+`npm run exportCsv`
 
 This will generate CSV's: `partsToCreate.csv` and `partsToUpdate.csv`
 
