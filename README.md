@@ -3,16 +3,15 @@
 2. [Populate](#populate)
 3. [Scrape](#scrape)
 4. [Import Identifiers](#import)
-5. [Export](#export)
+5. [Export CSV's](#export)
+6. [Upload](#upload)
 ## Clean{#clean} 
-[*Back to Top*](#home)
 
 `npm run clean`
 
 Delete Duplicate parts while keeping the latest row, and normalize keys ensuring no stray spaces or case mismatches cause false negatives during joins.
-## Populate{#populate}
-[*Back to Top*](#home)
-
+## Populate
+<a name="populate"></a>
 `npm run populate`
 
 Populate all of the hrefs by year, make, model, and body style. These are the hrefs for every vehicle.
@@ -75,8 +74,8 @@ And also `fixtures/vehiclesByYear.json` with e.g:
   ]
 }
 ```
-## Scrape{#scrape}
-[*Back to Top*](#home)
+## Scrap
+  e{#scrape}
 
 `npm run scrape`
 
@@ -154,25 +153,19 @@ And also `fixtures/parts.json` with e.g:
   }
 ]
 ```
-## Import Identifiers {#import} 
-[*Back to Top*](#home)
+## Import Identifiers
+<a name="import"></a>} 
 
 `npm run importIdentifiers`
 
-Download identifiers for all rows to a csv in order to compare what we have scraped.
-```
-SELECT 
-COALESCE("BodyHref", "ModelHref") || '--' || "PartNumber" AS constructed_id
-FROM public.canam_parts;
-```
-Save this to `tmp/productionIds.csv`
+Download identifiers for all rows to `tmp/productionIds.csv` in order to compare what we have scraped.
 
-## Export CSV's {#export}
-[*Back to Top*](#home)
+## Export CSV's
+<a name="export"></a>}
 
 `npm run exportCsv`
 
 This will generate CSV's: `partsToCreate.csv` and `partsToUpdate.csv`
 
-## Upload {#upload}
-[*Back to Top*](#home)
+## Upload
+<a name="upload"></a>}
