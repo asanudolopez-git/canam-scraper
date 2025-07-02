@@ -1,6 +1,9 @@
+import fs from 'fs';
 import puppeteer from 'puppeteer';
+import { Parser } from 'json2csv';
+import csv from 'csv-parser';
 import dotenv from 'dotenv';
-import { YEAR_1, PART_DESCRIPTION_REGEX } from "./constants.js";
+import { YEAR_1, PART_DESCRIPTION_REGEX, PARTS_TEMPLATE } from "./constants.js";
 dotenv.config();
 
 export const flatten = (arrs, callback) => arrs.reduce((acc, parts) => [...acc, ...callback(parts)], []);
@@ -66,4 +69,23 @@ export const withLogin = async (fn) => {
   await withRetry(() => fn(page), 3, 3000, 'Executing provided function');
   await browser.close();
   console.log('Browser closed');
+};
+
+export const readCsv = (filePath, callback = null) => new Promise((resolve, reject) => {
+  const results = new Set();
+  fs.createReadStream(filePath)
+    .pipe(csv())
+    .on('data', row => callback ? callback(row) : results.push(row))
+    .on('end', () => resolve(results))
+    .on('error', reject);
+});
+export const partsToCsv = (parts, fileName) => {
+  const parser = new Parser({
+    fields: Object.keys(PARTS_TEMPLATE),
+    defaultValue: '',
+    quote: '"',
+    delimiter: ','
+  });
+  const csv = parser.parse(parts);
+  fs.writeFileSync(fileName, csv, 'utf8');
 };

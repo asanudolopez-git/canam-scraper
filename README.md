@@ -1,8 +1,37 @@
-# CAN-AM Parts Scraper
-1. [Populate](#populate)
-2. [Scrape](#scrape)
+# CAN-AM Parts Scraper{#home}
+1. [Clean](#clean)
+2. [Populate](#populate)
+3. [Scrape](#scrape)
+4. [Import](#import)
+## Clean{#clean} 
+[*Back to Top*](#home)
+### Delete Duplicates
+Delete Duplicate parts while keeping the latest row.
+```
+DELETE FROM public.canam_parts a
+USING public.canam_parts b
+WHERE a.ctid < b.ctid
+  AND a."Year" = b."Year"
+  AND a."Make" = b."Make"
+  AND a."Model" = b."Model"
+  AND a."Body" IS NOT DISTINCT FROM b."Body"
+  AND a."PartNumber" = b."PartNumber";
+```
+### Normalize
+Trim and normalize keys ensuring no stray spaces or case mismatches cause false negatives during joins.
+
+```
+UPDATE public.canam_parts
+SET
+  "Make" = TRIM("Make"),
+  "Model" = TRIM("Model"),
+  "Body" = TRIM("Body"),
+  "PartNumber" = TRIM("PartNumber");
+```
 ## Populate{#populate}
+[*Back to Top*](#home)
 ### Populate Vehicle Links to be scraped
+
 `npm run populate`
 
 Populate all of the hrefs by year, make, model, and body style. These are the hrefs for every vehicle.
@@ -65,8 +94,9 @@ And also `fixtures/vehiclesByYear.json` with e.g:
   ]
 }
 ```
-
 ## Scrape{#scrape}
+[*Back to Top*](#home)
+
 `npm start`
 
 This will populate `tmp/partsByVehicle.json` with e.g:
@@ -143,3 +173,21 @@ And also `fixtures/parts.json` with e.g:
   }
 ]
 ```
+## Import{#import} 
+[*Back to Top*](#home)
+Download identifiers for all rows to a csv in order to compare what we have scraped.
+```
+SELECT 
+COALESCE("BodyHref", "ModelHref") || '--' || "PartNumber" AS constructed_id
+FROM public.canam_parts;
+```
+Save this to `tmp/productionIds.csv`
+
+## Export {#export}
+[*Back to Top*](#home)
+
+`npm run partsCsv`
+
+This will generate CSV's: `partsToCreate.csv` and `partsToUpdate.csv`
+
+## Upload
