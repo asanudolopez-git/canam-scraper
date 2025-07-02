@@ -8,9 +8,10 @@
     "populate": "node populate.js",
     "scrape": "node scrape.js",
     "importIdentifiers": "node importIdentifiers.js",
+    "exportCsv": "node exportCsv.js",
+    "upload": "node upload.js",
     "lint": "eslint -c config/eslint.config.js",
-    "test": "node --no-warnings=ExperimentalWarning --experimental-vm-modules node_modules/jest/bin/jest.js --config ./config/jest.config.js",
-    "exportCsv": "node exportCsv.js"
+    "test": "node --no-warnings=ExperimentalWarning --experimental-vm-modules node_modules/jest/bin/jest.js --config ./config/jest.config.js"
   },
   "dependencies": {
     "csv-parser": "^3.2.0",
