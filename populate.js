@@ -49,14 +49,14 @@ const populateVehiclesByYear = hrefs => {
   fs.writeFileSync(config.vehiclesByYearFilename, JSON.stringify(vehiclesByYear, null, 2));
 }
 
-const prepare = async () => {
+const populate = async () => {
   const hrefs = JSON.parse(fs.readFileSync(config.hrefsFileName, 'utf8'));
   await populateVehicleHrefs(hrefs, { start: getCurrentYear() });
   console.log(`Hrefs populated in ${config.hrefsFileName}`);
   console.log(`Vehicle Templates populated in ${config.vehiclesByYearFilename}`);
 }
-prepare()
+populate()
   .catch(err => {
-    console.error('Error in prepare:', err);
+    console.error('Error in populate:', err);
     process.exit(1);
   })

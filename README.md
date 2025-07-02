@@ -1,7 +1,7 @@
 # CAN-AM Parts Scraper
-1. [Prepare](#prepare)
+1. [Populate](#populate)
 2. [Scrape](#scrape)
-## Prepare{#prepare}
+## Populate{#populate}
 ### Populate Vehicle Links to be scraped
 `npm run populate`
 
@@ -28,7 +28,7 @@ This will populate `fixtures/hrefs.json` with e.g:
   }
 }
 ```
-And also `fixtures/populateVehiclesByYear.json` with e.g:
+And also `fixtures/vehiclesByYear.json` with e.g:
 ```
 {
   "2000": [
@@ -103,42 +103,11 @@ This will populate `tmp/partsByVehicle.json` with e.g:
       "ShopPriceList2_VanFax": null,
       "ShopPriceList3_Benson": null,
       "ShopPriceList4_PGW": null
-    },
-    {
-      "Year": "2025",
-      "YearHref": "https://www.canamautoglass.ca/nags/2025/",
-      "Make": "Acura",
-      "MakeHref": "https://www.canamautoglass.ca/nags/2025/ACURA",
-      "Model": "Integra",
-      "ModelHref": "https://www.canamautoglass.ca/nags/2025/ACURA/11",
-      "Body": "",
-      "BodyHref": "",
-      "PartNumber": "FW05681GTYN",
-      "Description": "(Solar) (Green Tint) Acoustic Infrared Interlayer Collision Mitigation Braking System Forward Collision Alert Road Departure Mitigation System LDWS Adaptive Cruise Control Lane Keep Assist Traffic Jam Assist Traffic Sign Recognition",
-      "WebsitePrice1_CanAm": "$327.89",
-      "Availability": "In Stock",
-      "Ships": "1 to 3 Days*",
-      "ShopPartPrice1_CanAm": null,
-      "ShopPartPriceOveride": 0,
-      "RainSensor": 1,
-      "LaneDeparture": 0,
-      "Acoustic": 0,
-      "ElectrochromaticMirror": 0,
-      "HeatedWiperPark": 1,
-      "CondensationSensor": 1,
-      "HeatedWindshield": 1,
-      "HeadsupDispplay": 1,
-      "ForwardCollisionAlert": 0,
-      "Logo": 0,
-      "HumiditySensor": 1,
-      "ShopPriceList2_VanFax": null,
-      "ShopPriceList3_Benson": null,
-      "ShopPriceList4_PGW": null
     }
   ]
 }
 ```
-And also `fixtures/populateVehiclesByYear.json` with e.g:
+And also `fixtures/parts.json` with e.g:
 ```
 [
   {
