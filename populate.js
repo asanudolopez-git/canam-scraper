@@ -1,7 +1,7 @@
 import { getHrefsForYears } from "./lib/navigation.js";
 import fs from "fs";
 import config from "./config/output.config.js";
-import { getCurrentYear, withLogin } from './lib/utils.js';
+import { getCurrentYear, withLogin, readJson } from './lib/utils.js';
 import { PARTS_TEMPLATE } from "./lib/constants.js";
 dotenv.config();
 
@@ -50,7 +50,7 @@ const populateVehiclesByYear = hrefs => {
 }
 
 const populate = async () => {
-  const hrefs = JSON.parse(fs.readFileSync(config.hrefsFileName, 'utf8'));
+  const hrefs = readJson(config.hrefsFileName) || {};
   await populateVehicleHrefs(hrefs, { start: getCurrentYear() });
   console.log(`Hrefs populated in ${config.hrefsFileName}`);
   console.log(`Vehicle Templates populated in ${config.vehiclesByYearFilename}`);
@@ -60,4 +60,4 @@ export default populate;
 populate().catch((err) => {
   console.error('❌ Fatal insert error:', err);
   process.exit(1);
-});;;
+});

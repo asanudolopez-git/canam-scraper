@@ -9,7 +9,7 @@ const client = new Client({
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
 });
-const TABLE = 'canam_parts';
+const TABLE = process.env.DB_TABLE;
 
 const addLastUpdatedColumn = async () => {
   try {
@@ -85,7 +85,7 @@ const deleteAndNormalize = async () => {
 const clean = async () => {
   await addLastUpdatedColumn();
   await deleteAndNormalize();
-}
+};
 export default clean;
 
 clean().catch((err) => {

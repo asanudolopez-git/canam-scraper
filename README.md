@@ -5,11 +5,12 @@
 4. [Import Identifiers](#import)
 5. [Export CSV's](#export)
 6. [Upload](#upload)
+
 ## Clean{#clean} 
 
 `npm run clean`
 
-Delete Duplicate parts while keeping the latest row, and normalize keys ensuring no stray spaces or case mismatches cause false negatives during joins.
+Create last_updated column, delete Ddplicate parts while keeping the latest row, and normalize keys ensuring no stray spaces or case mismatches cause false negatives during joins.
 ## Populate
 <a name="populate"></a>
 
@@ -170,3 +171,7 @@ This will generate CSV's: `partsToCreate.csv` and `partsToUpdate.csv`
 
 ## Upload
 <a name="upload"></a>
+
+`npm run upload`
+
+Updates and Creates New Rows.

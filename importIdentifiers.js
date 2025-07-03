@@ -11,7 +11,7 @@ const client = new Client({
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
 });
-const TABLE = 'canam_parts';
+const TABLE = process.env.DB_TABLE;
 
 // Configure CSV output
 const csvWriter = createObjectCsvWriter({
