@@ -1,4 +1,6 @@
+[Local Development](#development)
 # CAN-AM Parts Scraper{#home}
+
 1. [Clean](#clean)
 2. [Populate](#populate)
 3. [Scrape](#scrape)
@@ -176,7 +178,8 @@ This will generate CSV's: `partsToCreate.csv` and `partsToUpdate.csv`
 
 Updates and Creates New Rows.
 
-### Development
+### Local Development
+<a name="development"></a>
 
 1. Dump schema cleanly.
 ```
