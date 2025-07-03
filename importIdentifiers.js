@@ -11,6 +11,7 @@ const client = new Client({
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
 });
+const TABLE = 'canam_parts';
 
 // Configure CSV output
 const csvWriter = createObjectCsvWriter({
@@ -18,14 +19,14 @@ const csvWriter = createObjectCsvWriter({
   header: [{ id: 'constructed_id', title: 'constructed_id' }],
 });
 
-const importConstructedIds = async () => {
+const importIdentifiers = async () => {
   try {
     await client.connect();
 
     const result = await client.query(`
       SELECT 
         COALESCE("BodyHref", "ModelHref") || '--' || "PartNumber" AS constructed_id
-      FROM public.canam_parts;
+      FROM public.${TABLE};
     `);
 
     const records = result.rows;
@@ -40,6 +41,9 @@ const importConstructedIds = async () => {
   }
 };
 
-importConstructedIds();
+export default importIdentifiers;
 
-export default importConstructedIds;
+importIdentifiers().catch((err) => {
+  console.error('❌ Fatal insert error:', err);
+  process.exit(1);
+});;

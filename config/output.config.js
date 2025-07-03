@@ -5,7 +5,8 @@ const config = {
   partsByVehicleFilename: 'tmp/partsByVehicle.json',
   partsToUpdateFilename: 'tmp/partsToUpdate.csv',
   partsToCreateFilename: 'tmp/partsToCreate.csv',
-  productionIdentifiersFilename: 'tmp/productionIdentifiers.csv'
+  productionIdentifiersFilename: 'tmp/productionIdentifiers.csv',
+  skippedUploadsFilename: 'tmp/skippedUploads.csv',
 };
 
 export default config;

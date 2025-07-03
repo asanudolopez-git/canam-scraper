@@ -54,4 +54,7 @@ const scrape = async () => {
 };
 export default scrape;
 
-scrape();
+scrape().catch((err) => {
+  console.error('❌ Fatal insert error:', err);
+  process.exit(1);
+});;;

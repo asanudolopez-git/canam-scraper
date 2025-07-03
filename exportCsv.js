@@ -58,7 +58,9 @@ export const exportCsv = async () => {
   partsToCsv(partsToUpdate, config.partsToUpdateFilename);
   partsToCsv(partsToCreate, config.partsToCreateFilename);
 }
-
-exportCsv();
-
 export default exportCsv;
+
+exportCsv().catch((err) => {
+  console.error('❌ Fatal insert error:', err);
+  process.exit(1);
+});

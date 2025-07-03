@@ -12,13 +12,12 @@ const client = new Client({
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
 });
-
+const TABLE = 'canam_parts';
 const BATCH_SIZE = 500;
 
-const skippedRows = [];
-let totalUpdated = 0;
-
-const run = async () => {
+const update = async () => {
+  const skippedRows = [];
+  let totalUpdated = 0;
   const parts = await readCsv(config.partsToUpdateFilename);
   console.log(`📦 Loaded ${parts.length} rows from CSV`);
 
@@ -41,7 +40,7 @@ const run = async () => {
       } = part;
 
       const res = await client.query(
-        `UPDATE public.canam_parts
+        `UPDATE public.${TABLE}
          SET
            "Description" = $6,
            "WebsitePrice1_CanAm" = $7,
@@ -109,7 +108,7 @@ const run = async () => {
   // Write skipped rows to CSV
   if (skippedRows.length) {
     const csvWriter = createObjectCsvWriter({
-      path: 'skipped_parts.csv',
+      path: config.skippedUploadsFilename,
       header: Object.keys(skippedRows[0]).map((key) => ({
         id: key,
         title: key,
@@ -117,13 +116,145 @@ const run = async () => {
     });
 
     await csvWriter.writeRecords(skippedRows);
-    console.log(`⚠️  ${skippedRows.length} rows skipped (no match found) — saved to skipped_parts.csv`);
+    console.log(`⚠️  ${skippedRows.length} rows skipped (no match found) — saved to ${config.skippedUploadsFilename}`);
   }
 
   console.log(`✅ Done. Updated ${totalUpdated} rows.`);
 };
 
-run().catch((err) => {
-  console.error('❌ Fatal error:', err);
+
+const create = async () => {
+  let totalUpserts = 0;
+  let totalFailed = 0;
+  const parts = await readCsv(config.partsToCreateFilename);
+  console.log(`📦 Loaded ${parts.length} rows for UPSERT`);
+
+  await client.connect();
+
+  for (let i = 0; i < parts.length; i += BATCH_SIZE) {
+    const batch = parts.slice(i, i + BATCH_SIZE);
+    console.log(`🔁 UPSERT batch ${i / BATCH_SIZE + 1} (${batch.length} rows)...`);
+
+    await client.query('BEGIN');
+
+    for (const part of batch) {
+      const {
+        Year, Make, Model, Body, PartNumber,
+        Description, WebsitePrice1_CanAm, Availability, Ships,
+        ShopPartPrice1_CanAm, ShopPartPriceOveride,
+        RainSensor, LaneDeparture, Acoustic, ElectrochromaticMirror,
+        HeatedWiperPark, CondensationSensor, HeatedWindshield,
+        HeadsupDispplay, ForwardCollisionAlert, Logo, HumiditySensor,
+        YearHref, MakeHref, ModelHref, BodyHref
+      } = part;
+
+      try {
+        await client.query(
+          `INSERT INTO public.${TABLE} (
+            "Year", "Make", "Model", "Body", "PartNumber",
+            "Description", "WebsitePrice1_CanAm", "Availability", "Ships",
+            "ShopPartPrice1_CanAm", "ShopPartPriceOveride",
+            "RainSensor", "LaneDeparture", "Acoustic", "ElectrochromaticMirror",
+            "HeatedWiperPark", "CondensationSensor", "HeatedWindshield",
+            "HeadsupDispplay", "ForwardCollisionAlert", "Logo", "HumiditySensor",
+            "YearHref", "MakeHref", "ModelHref", "BodyHref",
+            last_updated
+          )
+          VALUES (
+            $1, $2, $3, $4, $5,
+            $6, $7, $8, $9,
+            $10, $11,
+            $12, $13, $14, $15,
+            $16, $17, $18,
+            $19, $20, $21, $22,
+            $23, $24, $25, $26,
+            NOW()
+          )
+          ON CONFLICT ("Year", "Make", "Model", "Body", "PartNumber")
+          DO UPDATE SET
+            "Description" = EXCLUDED."Description",
+            "WebsitePrice1_CanAm" = EXCLUDED."WebsitePrice1_CanAm",
+            "Availability" = EXCLUDED."Availability",
+            "Ships" = EXCLUDED."Ships",
+            "ShopPartPrice1_CanAm" = EXCLUDED."ShopPartPrice1_CanAm",
+            "ShopPartPriceOveride" = EXCLUDED."ShopPartPriceOveride",
+            "RainSensor" = EXCLUDED."RainSensor",
+            "LaneDeparture" = EXCLUDED."LaneDeparture",
+            "Acoustic" = EXCLUDED."Acoustic",
+            "ElectrochromaticMirror" = EXCLUDED."ElectrochromaticMirror",
+            "HeatedWiperPark" = EXCLUDED."HeatedWiperPark",
+            "CondensationSensor" = EXCLUDED."CondensationSensor",
+            "HeatedWindshield" = EXCLUDED."HeatedWindshield",
+            "HeadsupDispplay" = EXCLUDED."HeadsupDispplay",
+            "ForwardCollisionAlert" = EXCLUDED."ForwardCollisionAlert",
+            "Logo" = EXCLUDED."Logo",
+            "HumiditySensor" = EXCLUDED."HumiditySensor",
+            "YearHref" = EXCLUDED."YearHref",
+            "MakeHref" = EXCLUDED."MakeHref",
+            "ModelHref" = EXCLUDED."ModelHref",
+            "BodyHref" = EXCLUDED."BodyHref",
+            last_updated = NOW();`
+          ,
+          [
+            parseInt(Year),
+            Make,
+            Model,
+            Body,
+            PartNumber,
+            Description,
+            WebsitePrice1_CanAm,
+            Availability,
+            Ships,
+            toNum(ShopPartPrice1_CanAm),
+            toNum(ShopPartPriceOveride),
+            toInt(RainSensor),
+            toInt(LaneDeparture),
+            toInt(Acoustic),
+            toInt(ElectrochromaticMirror),
+            toInt(HeatedWiperPark),
+            toInt(CondensationSensor),
+            toInt(HeatedWindshield),
+            toInt(HeadsupDispplay),
+            toInt(ForwardCollisionAlert),
+            toInt(Logo),
+            toInt(HumiditySensor),
+            YearHref,
+            MakeHref,
+            ModelHref,
+            BodyHref,
+          ]
+        );
+
+        totalUpserts++;
+      } catch (err) {
+        totalFailed++;
+        console.warn(`❌ Failed UPSERT for ${PartNumber}:`, err.message);
+      }
+    }
+
+    await client.query('COMMIT');
+    console.log(`✅ Batch ${i / BATCH_SIZE + 1} committed`);
+  }
+
+  await client.end();
+  console.log(`🎉 Done. Total upserts: ${totalUpserts}, failed inserts: ${totalFailed}`);
+};
+
+
+
+const upload = async () => {
+  await update().catch((err) => {
+    console.error('❌ Fatal insert error:', err);
+    process.exit(1);
+  });
+  await create().catch((err) => {
+    console.error('❌ Fatal insert error:', err);
+    process.exit(1);
+  });
+}
+export default upload;
+
+upload().catch((err) => {
+  console.error('❌ Fatal insert error:', err);
   process.exit(1);
-});
+});;;
