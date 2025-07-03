@@ -26,7 +26,8 @@ export const generateOutputSets = async productionCsvFilename => {
   console.log(`✅ ${partsToUpdate.length} Parts to be updated!`);
   console.log(`✅ ${partsToCreate.length} Parts to create!`);
   console.log(`🤔 ${partsOrphaned.length} Parts that exist in the Database but were not scraped!`);
-  console.log(`🤞CHECKSUM🤞: ${partsToUpdate.length + partsOrphaned.length} === ${productionSet.size}`)
+  fs.writeFileSync(config.partsOrphanedFilename, JSON.stringify(partsOrphaned, null, 2));
+  // console.log(`🤞CHECKSUM🤞: ${partsToUpdate.length + partsOrphaned.length} === ${productionSet.size}`)
   return {
     partsToUpdate,
     partsToCreate,
@@ -34,7 +35,7 @@ export const generateOutputSets = async productionCsvFilename => {
 }
 
 export const exportCsv = async () => {
-  let { partsToUpdate, partsToCreate } = await generateOutputSets(config.productionIdentifiersFilename);
+  let { partsToUpdate, partsToCreate, partsOrphaned } = await generateOutputSets(config.productionIdentifiersFilename);
   const partsByVehicle = JSON.parse(fs.readFileSync(config.partsByVehicleFilename, 'utf8'));
 
   partsToUpdate = partsToUpdate.map(({ href, partNumber }) =>
@@ -48,8 +49,10 @@ export const exportCsv = async () => {
       ({ PartNumber }) => PartNumber === partNumber
     )
   );
+
   partsToCsv(partsToUpdate, config.partsToUpdateFilename);
   partsToCsv(partsToCreate, config.partsToCreateFilename);
+
 }
 export default exportCsv;
 

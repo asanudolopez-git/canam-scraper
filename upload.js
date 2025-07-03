@@ -38,7 +38,7 @@ const update = async client => {
       } = part;
 
       const res = await client.query(
-        `UPDATE public.${TABLE}
+        `UPDATE public."${TABLE}"
          SET
            "Description" = $6,
            "WebsitePrice1_CanAm" = $7,
