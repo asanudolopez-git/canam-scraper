@@ -11,7 +11,11 @@ const client = new Client({
   database: process.env.DB_DATABASE,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
+  ssl: {
+    rejectUnauthorized: false, // required for AWS RDS
+  },
 });
+
 const TABLE = process.env.DB_TABLE;
 const BATCH_SIZE = 500;
 
@@ -235,7 +239,7 @@ const create = async client => {
 
 const upload = async () => {
   await client.connect();
-  await update(client);
+  // await update(client);
   await create(client);
   client.end();
 }

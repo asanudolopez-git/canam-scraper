@@ -51,7 +51,8 @@ export const populateVehiclesByYear = hrefs => {
 }
 
 const populate = async () => {
-  const start = toInt(process.argsv[2] || getCurrentYear());
+  // const start = toInt(process.args[2] || getCurrentYear());
+  const start = getCurrentYear();
   const hrefs = readJson(config.hrefsFileName) || {};
   await populateVehicleHrefs(hrefs, { start });
   console.log(`Hrefs populated in ${config.hrefsFileName}`);

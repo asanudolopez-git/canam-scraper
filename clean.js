@@ -8,7 +8,11 @@ const client = new Client({
   database: process.env.DB_DATABASE,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
+  ssl: {
+    rejectUnauthorized: false, // required for AWS RDS
+  },
 });
+
 const TABLE = process.env.DB_TABLE;
 
 export const addLastUpdatedColumn = async client => {
@@ -102,8 +106,8 @@ export const deleteAndNormalize = async client => {
 const clean = async () => {
   await client.connect();
   await addLastUpdatedColumn(client);
-  await addUniqueConstraint(client);
   await deleteAndNormalize(client);
+  await addUniqueConstraint(client);
   await client.end();
 };
 export default clean;
