@@ -11,7 +11,7 @@ const client = new Client({
 });
 const TABLE = process.env.DB_TABLE;
 
-const addLastUpdatedColumn = async client => {
+export const addLastUpdatedColumn = async client => {
   try {
     await client.query(`
       DO $$
@@ -34,7 +34,8 @@ const addLastUpdatedColumn = async client => {
     console.error('❌ Failed to add column:', err.message);
   }
 };
-const addUniqueConstraint = async client => {
+
+export const addUniqueConstraint = async client => {
   try {
     await client.query(`
       DO $$
@@ -59,7 +60,7 @@ const addUniqueConstraint = async client => {
 }
 
 
-const deleteAndNormalize = async client => {
+export const deleteAndNormalize = async client => {
   try {
     const deleteSQL = `
       DELETE FROM public."${TABLE}" a

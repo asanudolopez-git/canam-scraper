@@ -15,7 +15,7 @@ const client = new Client({
 const TABLE = process.env.DB_TABLE;
 const BATCH_SIZE = 500;
 
-const update = async client => {
+export const update = async client => {
   const skippedRows = [];
   let totalUpdated = 0;
   const parts = await readCsv(config.partsToUpdateFilename);

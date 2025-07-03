@@ -6,7 +6,7 @@ import { getCurrentYear, withLogin, toInt, readJson } from './lib/utils.js';
 import { PARTS_TEMPLATE } from "./lib/constants.js";
 dotenv.config();
 
-const populateVehicleHrefs = async (existingHrefs = {}, yearRange) => {
+export const populateVehicleHrefs = async (existingHrefs = {}, yearRange) => {
   withLogin(async page => {
     const hrefs = await getHrefsForYears(yearRange, page, existingHrefs);
     fs.writeFileSync(config.hrefsFileName, JSON.stringify(hrefs, null, 2));
@@ -14,7 +14,7 @@ const populateVehicleHrefs = async (existingHrefs = {}, yearRange) => {
   });
 }
 
-const populateVehiclesByYear = hrefs => {
+export const populateVehiclesByYear = hrefs => {
   const vehiclesByYear = {};
   Object.entries(hrefs).forEach(([year, { href: yearHref, makes }]) => {
     const parts = [];

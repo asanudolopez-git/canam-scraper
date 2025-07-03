@@ -19,7 +19,7 @@ const csvWriter = createObjectCsvWriter({
   header: [{ id: 'constructed_id', title: 'constructed_id' }],
 });
 
-const importIdentifiers = async () => {
+export const importIdentifiers = async () => {
   try {
     await client.connect();
 
@@ -34,6 +34,7 @@ const importIdentifiers = async () => {
     await csvWriter.writeRecords(records);
 
     console.log(`✅ Exported ${records.length} constructed IDs to constructed_ids.csv`);
+    return records;
   } catch (err) {
     console.error('❌ Failed to export constructed IDs:', err);
   } finally {
