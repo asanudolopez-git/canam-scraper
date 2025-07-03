@@ -25,8 +25,8 @@ const importIdentifiers = async () => {
 
     const result = await client.query(`
       SELECT 
-        COALESCE("BodyHref", "ModelHref") || '--' || "PartNumber" AS constructed_id
-      FROM public.${TABLE};
+        COALESCE(NULLIF("BodyHref", ''), "ModelHref") || '--' || "PartNumber" AS constructed_id
+      FROM public."${TABLE}";
     `);
 
     const records = result.rows;

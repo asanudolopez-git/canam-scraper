@@ -175,3 +175,45 @@ This will generate CSV's: `partsToCreate.csv` and `partsToUpdate.csv`
 `npm run upload`
 
 Updates and Creates New Rows.
+
+### Development
+
+1. Dump schema cleanly.
+```
+PGPASSWORD='<pg-password>' \
+PGSSLMODE=require \
+pg_dump \
+  -h <Host> \
+  -U <User> \
+  -d <Database> \
+  -t 'public."<table>"' \
+  --schema-only \
+  --no-owner \
+  --no-comments \
+  -f <table>_schema.sql
+```
+
+2. Dump data cleanly
+```
+PGPASSWORD='<pg-password>' \
+PGSSLMODE=require \
+pg_dump \
+  -h <Host> \
+  -U <User> \
+  -d <Database> \
+  -t 'public."<table>"' \
+  --data-only \
+  --column-inserts \
+  --no-owner \
+  --no-comments \
+  -f <table>_data.sql
+```
+
+3. Import locally 
+`psql -U <username> -d <database> -c 'DROP TABLE IF EXISTS "<table>" CASCADE;'`
+
+```
+psql -U <username> -d <database> -f <table>_schema.sql
+psql -U <username> -d <database> -f <table>_data.sql
+
+```

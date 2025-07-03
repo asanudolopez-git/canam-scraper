@@ -15,13 +15,11 @@ const client = new Client({
 const TABLE = process.env.DB_TABLE;
 const BATCH_SIZE = 500;
 
-const update = async () => {
+const update = async client => {
   const skippedRows = [];
   let totalUpdated = 0;
   const parts = await readCsv(config.partsToUpdateFilename);
   console.log(`📦 Loaded ${parts.length} rows from CSV`);
-
-  await client.connect();
 
   for (let i = 0; i < parts.length; i += BATCH_SIZE) {
     const batch = parts.slice(i, i + BATCH_SIZE);
@@ -103,8 +101,6 @@ const update = async () => {
     console.log(`✅ Committed batch ${i / BATCH_SIZE + 1}`);
   }
 
-  await client.end();
-
   // Write skipped rows to CSV
   if (skippedRows.length) {
     const csvWriter = createObjectCsvWriter({
@@ -122,14 +118,11 @@ const update = async () => {
   console.log(`✅ Done. Updated ${totalUpdated} rows.`);
 };
 
-
-const create = async () => {
+const create = async client => {
   let totalUpserts = 0;
   let totalFailed = 0;
   const parts = await readCsv(config.partsToCreateFilename);
   console.log(`📦 Loaded ${parts.length} rows for UPSERT`);
-
-  await client.connect();
 
   for (let i = 0; i < parts.length; i += BATCH_SIZE) {
     const batch = parts.slice(i, i + BATCH_SIZE);
@@ -150,7 +143,7 @@ const create = async () => {
 
       try {
         await client.query(
-          `INSERT INTO public.${TABLE} (
+          `INSERT INTO public."${TABLE}" (
             "Year", "Make", "Model", "Body", "PartNumber",
             "Description", "WebsitePrice1_CanAm", "Availability", "Ships",
             "ShopPartPrice1_CanAm", "ShopPartPriceOveride",
@@ -235,22 +228,16 @@ const create = async () => {
     await client.query('COMMIT');
     console.log(`✅ Batch ${i / BATCH_SIZE + 1} committed`);
   }
-
-  await client.end();
   console.log(`🎉 Done. Total upserts: ${totalUpserts}, failed inserts: ${totalFailed}`);
 };
 
 
 
 const upload = async () => {
-  await update().catch((err) => {
-    console.error('❌ Fatal insert error:', err);
-    process.exit(1);
-  });
-  await create().catch((err) => {
-    console.error('❌ Fatal insert error:', err);
-    process.exit(1);
-  });
+  await client.connect();
+  await update(client);
+  await create(client);
+  client.end();
 }
 export default upload;
 

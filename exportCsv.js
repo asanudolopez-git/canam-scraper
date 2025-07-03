@@ -1,18 +1,11 @@
 import fs from 'fs';
 import config from './config/output.config.js'
-import { partsToCsv, readCsv, constructId } from './lib/utils.js';
+import { partsToCsv, readJson, readCsv, constructId } from './lib/utils.js';
 
 export const generateOutputSets = async productionCsvFilename => {
-  const localSet = new Set(
-    JSON.parse(
-      fs.readFileSync(config.partsFilename, 'utf8')
-    ).map(constructId)
-  )
-
+  const localSet = new Set(readJson(config.partsFilename).map(constructId));
   const productionSet = new Set();
-  await readCsv(productionCsvFilename, row =>
-    row.constructed_id && productionSet.add(row.constructed_id.trim())
-  )
+  await readCsv(productionCsvFilename, row => row.constructed_id && productionSet.add(row.constructed_id.trim()));
 
   console.log(`✅ ${productionSet.size} ids in production`);
   console.log(`✅ ${localSet.size} ids locally`);
